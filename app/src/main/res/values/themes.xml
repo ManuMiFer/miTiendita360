@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Tu tema principal de la app (probablemente ya lo tienes) -->
+    <style name="Theme.MiTiendita360" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="MiDatePickerDialogTheme" parent="android:Theme.Material.Light.Dialog">
+
+        <!-- 1. FONDO: Ya lo definimos con el drawable. -->
+        <item name="android:windowBackground">@drawable/datepicker_background</item>
+
+        <!-- 2. COLOR DE ACENTO: El color para la selección, el círculo del día, etc. -->
+        <item name="android:colorAccent">@color/verdeLimon</item>
+
+        <!-- 3. COLORES DEL TEXTO: ¡La parte más importante! -->
+        <!-- Color del Header (la fecha grande en la parte superior) -->
+        <item name="android:textColorPrimaryInverse">@color/white</item>
+        <!-- Color de los números del mes (días) -->
+        <item name="android:textColorPrimary">@color/white</item>
+        <!-- Color de los días de la semana (L, M, X...) y del año en el header -->
+        <item name="android:textColorSecondary">@color/grisClaro</item>
+        <!-- Color del texto en el cuerpo del diálogo -->
+        <item name="android:textColor">@color/white</item>
+
+        <!-- 4. HEADER DEL CALENDARIO (la parte de arriba que es de color) -->
+        <!-- Fondo del header -->
+        <item name="android:colorPrimary">@color/xd</item> <!-- Un gris oscuro para el header -->
+        <!-- Color de la barra de estado cuando el diálogo está abierto -->
+        <item name="android:colorPrimaryDark">@color/fondo1</item>
+
+        <!-- 5. COLOR DE LOS BOTONES (Aceptar, Cancelar) -->
+        <item name="android:buttonBarPositiveButtonStyle">@style/MiDatePickerButtonStyle</item>
+        <item name="android:buttonBarNegativeButtonStyle">@style/MiDatePickerButtonStyle</item>
+    </style>
+
+    <!-- Estilo para los botones del diálogo (esto no cambia) -->
+    <style name="MiDatePickerButtonStyle" parent="android:Widget.Material.Light.Button.Borderless">
+        <item name="android:textColor">@color/verdeLimon</item>
+    </style>
+
+</resources>

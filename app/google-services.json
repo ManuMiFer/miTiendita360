@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "72718378427",
+    "project_id": "mitiendita360",
+    "storage_bucket": "mitiendita360.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:72718378427:android:ad6a8ef04250a5d4bd109e",
+        "android_client_info": {
+          "package_name": "com.miranda.mitiendita360"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAs-rO1SnPHNf6H-W1nq_hu3ldCjU_FoBs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,31 @@
+gitignore
+# Archivos de configuración del IDE (Android Studio, IntelliJ)
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Archivos de compilación y generados por Gradle
+.gradle/
+build/
+
+# Archivo de propiedades locales (¡IMPORTANTE PARA LAS CLAVES API!)
+# Esta es una de las reglas más importantes.
+local.properties
+
+# Archivos de empaquetado de Android (Apps generadas)
+*.apk
+*.aab
+*.ap_
+
+# Archivos de Keystore (Contraseñas de publicación, ¡NUNCA SUBIR!)
+*.jks
+*.keystore
+
+# Archivos de log, temporales y del sistema operativo
+*.log
+captures/
+.externalNativeBuild/
+.cxx/
+.DS_Store
+Thumbs.db
