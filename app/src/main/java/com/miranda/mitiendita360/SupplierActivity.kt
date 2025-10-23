@@ -82,7 +82,6 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
     )
 }
 
-@Preview(showBackground = true)
 @Composable
 fun InfoRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String) {
     Row(
