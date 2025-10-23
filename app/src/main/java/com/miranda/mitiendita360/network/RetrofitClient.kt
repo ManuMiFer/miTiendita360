@@ -18,4 +18,8 @@ object RetrofitClient {
     val categoriaService: CategoriaService by lazy {
         instance.create(CategoriaService::class.java)
     }
+
+    val proveedorService: ProveedorService by lazy {
+        instance.create(ProveedorService::class.java)
+    }
 }
