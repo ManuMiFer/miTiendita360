@@ -539,10 +539,9 @@ class InventoryActivity : ComponentActivity() {
                                                         viewModel.onAttemptDelete(product)
                                                     },
                                                     onCardClick = {
-                                                            productId ->
-                                                        val intent = Intent(context, ProductDetailActivity::class.java).apply {
-                                                            putExtra("PRODUCT_ID", productId)
-                                                        }
+                                                        val correctProductId = product.id!!
+                                                        val intent = Intent(context, ProductDetailActivity::class.java)
+                                                        intent.putExtra("PRODUCT_ID", correctProductId)
                                                         productDetailLauncher.launch(intent)
                                                     }
                                                 )
