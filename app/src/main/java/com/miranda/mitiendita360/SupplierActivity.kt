@@ -52,6 +52,8 @@ import com.miranda.mitiendita360.ui.theme.MiTiendita360Theme
 import com.miranda.mitiendita360.ui.theme.VerdeLimon
 
 class SupplierActivity : ComponentActivity() {
+    private val viewModel: SupplierViewModel by viewModels() //
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
