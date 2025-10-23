@@ -84,8 +84,43 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
-    MiTiendita360Theme {
-        Greeting("Android")
+fun InfoRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ){
+        Image(
+            imageVector = icon,
+            contentDescription = label,
+            colorFilter = ColorFilter.tint(color = VerdeLimon),
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.size(53.dp)
+        )
+        Column {
+            Text(text = label, color = Color.White, fontSize = 18.sp)
+            Text(text = value, color = Color.White, fontSize = 18.sp)
+        }
+    }
+}
+
+// Composable para la cabecera estática
+@Composable
+fun TopHeader() {
+    Box(
+        modifier = Modifier.fillMaxWidth()
+    ){
+        Image(
+            painterResource(R.drawable.suppliers),
+            contentDescription = "Header Image",
+            colorFilter = ColorFilter.tint(color = VerdeLimon),
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.size(250.dp)
+        )
+        Column(
+            modifier = Modifier.padding(top = 145.dp, start = 210.dp),
+        ){
+            Text("Detalle", color = Color.White, fontSize = 25.sp)
+            Text("Proveedor", color = Color.White, fontSize = 25.sp)
+        }
     }
 }
