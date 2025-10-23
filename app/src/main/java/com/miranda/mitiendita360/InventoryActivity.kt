@@ -529,7 +529,12 @@ class InventoryActivity : ComponentActivity() {
                                                         intent.putExtra("productId", productId)
                                                         updateProductLauncher.launch(intent)
                                                     },
-                                                    onUpdateStatusClick = { onUpdateStatusClick(product.id!!, product.estado!!) },
+                                                    onUpdateStatusClick = {
+                                                        onUpdateStatusClick(
+                                                            product.id!!,
+                                                            product.estado!!
+                                                        )
+                                                    },
                                                     onDeletClick = {
                                                         viewModel.onAttemptDelete(product)
                                                     },
