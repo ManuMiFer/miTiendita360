@@ -110,17 +110,12 @@ class InventoryActivity : ComponentActivity() {
         setContent {
             val context = LocalContext.current
             val message = viewModel.userMessage
-            val selectedStatus = remember { mutableStateOf<Int?>(1) }
             LaunchedEffect(message) {
                 if (message != null) {
                     Toast.makeText(context, message, Toast.LENGTH_LONG).show()
                     viewModel.clearUserMessage() // Limpia el mensaje después de mostrarlo
                 }
             }
-
-            // Observa la petición de refresco desde el ViewModel
-            val shouldRefresh = viewModel.refreshList
-
             MiTiendita360Theme {
                 val keyboardController = LocalSoftwareKeyboardController.current
                 val context = LocalContext.current
