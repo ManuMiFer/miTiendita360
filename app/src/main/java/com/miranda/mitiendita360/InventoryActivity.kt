@@ -522,7 +522,10 @@ class InventoryActivity : ComponentActivity() {
                                                 ProductItemCard(
                                                     product = product,
                                                     onEditClick = { productId ->
-                                                        val intent = Intent(context, ProductUpdateActivity::class.java)
+                                                        val intent = Intent(
+                                                            context,
+                                                            ProductUpdateActivity::class.java
+                                                        )
                                                         intent.putExtra("productId", productId)
                                                         updateProductLauncher.launch(intent)
                                                     },
