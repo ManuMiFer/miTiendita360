@@ -75,11 +75,35 @@ class SupplierActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hola $name!",
-        modifier = modifier
-    )
+fun SupplierCard(supplier: Proveedor) {
+    Column (
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape = RoundedCornerShape(25.dp))
+            .background(color = GrisClaro)
+            .padding(20.dp)
+    ){
+        Text(
+            text = "RUC: ${supplier.ruc}",
+            color = VerdeLimon,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = supplier.nombre,
+            color = Color.White,
+            fontSize = 20.sp,
+        )
+        // La dirección y el teléfono ahora usan un Composable reutilizable
+        if (!supplier.direccion.isNullOrBlank()) {
+            Spacer(modifier = Modifier.height(10.dp))
+            InfoRow(icon = Icons.Default.LocationOn, label = "Dirección:", value = supplier.direccion)
+        }
+        if (!supplier.telefono.isNullOrBlank()) {
+            Spacer(modifier = Modifier.height(10.dp))
+            InfoRow(icon = Icons.Default.Call, label = "Teléfono:", value = supplier.telefono)
+        }
+    }
 }
 
 @Composable
