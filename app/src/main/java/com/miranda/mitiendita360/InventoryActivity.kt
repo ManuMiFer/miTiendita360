@@ -574,7 +574,7 @@ fun ProductItemCard(
         modifier = Modifier
             .fillMaxWidth()
             .height(150.dp)
-            .clickable{onCardClick(product.id!!)}
+            .clickable{onCardClick()}
             .clip(shape = RoundedCornerShape(30.dp))
             .background(color = GrisClaro)
             .padding(15.dp),
