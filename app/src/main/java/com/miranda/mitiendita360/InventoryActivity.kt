@@ -559,7 +559,7 @@ fun ProductItemCard(
     onEditClick: (Int) -> Unit,
     onUpdateStatusClick: () -> Unit,
     onDeletClick: () -> Unit,
-    onCardClick: (Int) -> Unit
+    onCardClick: () -> Unit
     ) {
     val context = LocalContext.current
     val imageUrl = if (!product.imagen.isNullOrBlank()) {
