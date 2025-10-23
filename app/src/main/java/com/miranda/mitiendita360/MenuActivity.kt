@@ -79,7 +79,7 @@ class MenuActivity : ComponentActivity() {
                 AccionRapidaItem("Nueva Venta", R.drawable.cashregister, SaleInsertActivity::class),
                 AccionRapidaItem("Historial Ventas", R.drawable.check, SaleHistoryActivity::class),
                 AccionRapidaItem("Proveedor", R.drawable.supplier, SupplierInsertActivity::class),
-                 AccionRapidaItem("Mis Proveedores", R.drawable.supliers, SupplierActivity::class)
+                 AccionRapidaItem("Mis Proveedores", R.drawable.suppliers, SupplierActivity::class)
             )
             val context = LocalContext.current
             MiTiendita360Theme {
