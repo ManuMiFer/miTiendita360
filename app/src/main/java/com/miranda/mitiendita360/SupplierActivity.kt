@@ -58,6 +58,10 @@ class SupplierActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
+            // 2. Observar los estados del ViewModel
+            val uiState by viewModel.uiState 
+            val searchQuery by viewModel.searchQuery
+
             MiTiendita360Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Greeting(
