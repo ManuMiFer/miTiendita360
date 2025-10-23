@@ -63,17 +63,107 @@ class SupplierActivity : ComponentActivity() {
             val searchQuery by viewModel.searchQuery
 
             MiTiendita360Theme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                val keyboardController = LocalSoftwareKeyboardController.current
+                val focusManager = LocalFocusManager.current
+                Column (
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.White)
+                ){
+                    // --- COLUMNA SUPERIOR (CON FONDO Y FORMA) ---
+                    Column (
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f) // Ocupa el espacio disponible
+                            .clip(
+                                shape = WideOvalBottomShape(
+                                    arcHeight = 300f,
+                                    horizontalControlOffset = 180f
+                                )
+                            )
+                            .background(color = Fondo1)
+                            .padding(top = 30.dp, start = 20.dp, end = 20.dp)
+                    ){
+                        // Cabecera estática
+                        TopHeader()
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        // Campo de búsqueda controlado por el ViewModel
+                        TextFieldChevere2(
+                            value = searchQuery,
+                            onValueChange = { viewModel.onSearchQueryChange(it)},
+                            placeholder = "Buscar por RUC o Nombre...",
+                            modifier = Modifier.fillMaxWidth(),
+                            imeAction = ImeAction.Search,
+                            // 2. Define qué hacer cuando se presiona ese botón
+                            keyboardActions = KeyboardActions(
+                                onSearch = {
+                                    // 3. Oculta el teclado y quita el foco
+                                    keyboardController?.hide()
+                                    focusManager.clearFocus()
+                                }
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        // --- ÁREA DE CONTENIDO DINÁMICO ---
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.TopCenter
+                        ) {
+                            when (val state = uiState) {
+                                is SupplierUiState.Loading -> {
+                                    CircularProgressIndicator(color = VerdeLimon)
+                                }
+                                is SupplierUiState.Error -> {
+                                    Text(
+                                        text = state.message,
+                                        color = Color.Red,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.padding(16.dp)
+                                    )
+                                }
+                                is SupplierUiState.Success -> {
+                                    if (state.suppliers.isEmpty()) {
+                                        Text(
+                                            text = "No se encontraron proveedores.",
+                                            color = Color.White
+                                        )
+                                    } else {
+                                        LazyColumn(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalArrangement = Arrangement.spacedBy(15.dp),
+                                            contentPadding = PaddingValues(bottom = 20.dp)
+                                        ) {
+                                            items(state.suppliers, key = { it.ruc }) { supplier ->
+                                                SupplierCard(supplier = supplier)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // --- BOTÓN INFERIOR ---
+                    Column (
+                        modifier = Modifier
+                            .padding(horizontal = 20.dp)
+                            .padding(bottom = 16.dp, top = 16.dp)
+                    ){
+                        BotonChevere(
+                            texto = "Regresar",
+                            colorFondo = VerdeLimon,
+                            colorTexto = GrisClaro,
+                            onClick = { finish() } // Cierra la actividad
+                        )
+                    }
                 }
             }
         }
     }
 }
-
+// Composable para la tarjeta de un solo proveedor (reutilizable)
 @Composable
 fun SupplierCard(supplier: Proveedor) {
     Column (
