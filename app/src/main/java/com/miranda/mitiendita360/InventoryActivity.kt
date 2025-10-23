@@ -515,11 +515,12 @@ class InventoryActivity : ComponentActivity() {
                                             verticalArrangement = Arrangement.spacedBy(15.dp),
                                             modifier = Modifier.fillMaxHeight()// Espacio entre items
                                         ) {
-                                            items(
+                                            itemsIndexed(
                                                 items = products,
-                                                key = { product -> product.id!! } // Clave única para cada item
-                                            ) { product ->
-                                                ProductItemCard(product = product,
+                                                key = { _, product -> product.id!! }
+                                            ) { index, product ->
+                                                ProductItemCard(
+                                                    product = product,
                                                     onEditClick = { productId ->
                                                         val intent = Intent(context, ProductUpdateActivity::class.java)
                                                         intent.putExtra("productId", productId)
