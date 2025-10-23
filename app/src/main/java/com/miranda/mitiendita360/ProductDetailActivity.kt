@@ -76,16 +76,9 @@ class ProductDetailActivity : ComponentActivity() {
                     if (productId != -1 && userId.isNotBlank()) {
                         lifecycleScope.launch {
                             uiState = try {
-                                // REUTILIZAMOS el endpoint getProducts, pasándole el ID
-                                val response = RetrofitClient.productoService.getProducts(
-                                    userId = userId,
-                                    searchTerm = null,
-                                    categoryId = null,
-                                    estado = null
-                                )
-                                // Como devuelve una lista, tomamos el primer (y único) elemento
-                                if (response.success && response.data.isNotEmpty()) {
-                                    ProductDetailUiState.Success(response.data.first())
+                                val response = RetrofitClient.productoService.getProductById(productId)
+                                if (response.success && response.data != null) {
+                                    ProductDetailUiState.Success(response.data)
                                 } else {
                                     ProductDetailUiState.Error(response.message ?: "Producto no encontrado")
                                 }
