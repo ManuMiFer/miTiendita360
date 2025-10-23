@@ -219,7 +219,7 @@ class ProductUpdateActivity : ComponentActivity() {
                     // 2. Cargar Proveedores (tu código original)
                     if (uid != null) {
                         try {
-                            val responseProv = proveedorService.getProveedores(uid)
+                            val responseProv = proveedorService.getProveedores(uid,"" )
                             if (responseProv.success && responseProv.data != null) {
                                 listaProveedores = responseProv.data
                             }

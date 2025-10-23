@@ -238,7 +238,7 @@ class ProductInsertActivity : ComponentActivity() {
 
                         // --- CARGAR PROVEEDORES ---
                         try {
-                            val responseProv = proveedorService.getProveedores(uid)
+                            val responseProv = proveedorService.getProveedores(uid, "")
                             if (responseProv.success && responseProv.data != null) {
                                 listaProveedores = responseProv.data
                             }
