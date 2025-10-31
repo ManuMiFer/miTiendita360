@@ -66,7 +66,7 @@ import retrofit2.converter.scalars.ScalarsConverterFactory
 
 class UserRegisterActivity : ComponentActivity() {
     private val retrofit = Retrofit.Builder()
-        .baseUrl("https://manuelmirandafernandez.com/")
+        .baseUrl("${BuildConfig.API_BASE_URL}")
         .addConverterFactory(ScalarsConverterFactory.create())
         .build()
     private val service = retrofit.create(usuarioService::class.java)

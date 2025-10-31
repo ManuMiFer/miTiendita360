@@ -53,7 +53,7 @@ class UsuarioResponse(
 class WelcomeActivity : ComponentActivity() {
 
     private val retrofit = Retrofit.Builder()
-        .baseUrl("https://manuelmirandafernandez.com/") // Revisa que tu URL base sea correcta
+        .baseUrl("${BuildConfig.API_BASE_URL}") // Revisa que tu URL base sea correcta
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 

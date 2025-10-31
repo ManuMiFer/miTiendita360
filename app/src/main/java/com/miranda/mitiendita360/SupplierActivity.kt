@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -23,6 +25,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBackIos
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.CircularProgressIndicator
@@ -44,8 +47,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.miranda.mitiendita360.models.Proveedor
-import com.miranda.mitiendita360.ui.components.BotonChevere
-import com.miranda.mitiendita360.ui.components.TextFieldChevere2
+import com.miranda.mitiendita360.ui.components.SearchTextField
+import com.miranda.mitiendita360.ui.components.TopHeader
 import com.miranda.mitiendita360.ui.theme.Fondo1
 import com.miranda.mitiendita360.ui.theme.GrisClaro
 import com.miranda.mitiendita360.ui.theme.MiTiendita360Theme
@@ -70,27 +73,42 @@ class SupplierActivity : ComponentActivity() {
                         .fillMaxSize()
                         .background(Color.White)
                 ){
-                    // --- COLUMNA SUPERIOR (CON FONDO Y FORMA) ---
                     Column (
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .weight(1f) // Ocupa el espacio disponible
-                            .clip(
-                                shape = WideOvalBottomShape(
-                                    arcHeight = 300f,
-                                    horizontalControlOffset = 180f
-                                )
-                            )
+                            .weight(1f)
                             .background(color = Fondo1)
                             .padding(top = 30.dp, start = 20.dp, end = 20.dp)
                     ){
-                        // Cabecera estática
-                        TopHeader()
+                        // Cabecera
+                        Box(){
+                            TopHeader()
+                            Column (
+                                horizontalAlignment = Alignment.Start,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                            ){
+                                Spacer(modifier = Modifier.height(25.dp))
+                                Image(
+                                    imageVector = (Icons.Default.ArrowBackIos),
+                                    contentDescription = "",
+                                    colorFilter = ColorFilter.tint(color = Color.White),
+                                    contentScale = ContentScale.Fit,
+                                    modifier = Modifier
+                                        .offset(x = 5.dp)
+                                        .size(30.dp)
+                                        .clickable {
+                                            finish()
+                                        }
+                                )
+                            }
+                        }
+
                         Spacer(modifier = Modifier.height(20.dp))
 
                         // Campo de búsqueda controlado por el ViewModel
-                        TextFieldChevere2(
+                        SearchTextField(
                             value = searchQuery,
                             onValueChange = { viewModel.onSearchQueryChange(it)},
                             placeholder = "Buscar por RUC o Nombre...",
@@ -109,7 +127,9 @@ class SupplierActivity : ComponentActivity() {
 
                         // --- ÁREA DE CONTENIDO DINÁMICO ---
                         Box(
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
                             contentAlignment = Alignment.TopCenter
                         ) {
                             when (val state = uiState) {
@@ -144,19 +164,6 @@ class SupplierActivity : ComponentActivity() {
                                 }
                             }
                         }
-                    }
-                    // --- BOTÓN INFERIOR ---
-                    Column (
-                        modifier = Modifier
-                            .padding(horizontal = 20.dp)
-                            .padding(bottom = 16.dp, top = 16.dp)
-                    ){
-                        BotonChevere(
-                            texto = "Regresar",
-                            colorFondo = VerdeLimon,
-                            colorTexto = GrisClaro,
-                            onClick = { finish() } // Cierra la actividad
-                        )
                     }
                 }
             }
@@ -212,28 +219,6 @@ fun InfoRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String
         Column {
             Text(text = label, color = Color.White, fontSize = 18.sp)
             Text(text = value, color = Color.White, fontSize = 18.sp)
-        }
-    }
-}
-
-// Composable para la cabecera estática
-@Composable
-fun TopHeader() {
-    Box(
-        modifier = Modifier.fillMaxWidth()
-    ){
-        Image(
-            painterResource(R.drawable.suppliers),
-            contentDescription = "Header Image",
-            colorFilter = ColorFilter.tint(color = VerdeLimon),
-            contentScale = ContentScale.Fit,
-            modifier = Modifier.size(250.dp)
-        )
-        Column(
-            modifier = Modifier.padding(top = 145.dp, start = 210.dp),
-        ){
-            Text("Detalle", color = Color.White, fontSize = 25.sp)
-            Text("Proveedor", color = Color.White, fontSize = 25.sp)
         }
     }
 }

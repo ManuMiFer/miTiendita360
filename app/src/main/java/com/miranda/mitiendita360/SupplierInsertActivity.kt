@@ -34,6 +34,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
@@ -43,6 +45,7 @@ import com.miranda.mitiendita360.network.ProveedorService
 import com.miranda.mitiendita360.network.RetrofitClient
 import com.miranda.mitiendita360.ui.components.BotonChevere
 import com.miranda.mitiendita360.ui.components.TextFieldChevere
+import com.miranda.mitiendita360.ui.components.TextFieldChevere2
 import com.miranda.mitiendita360.ui.theme.Fondo1
 import com.miranda.mitiendita360.ui.theme.GrisClaro
 import com.miranda.mitiendita360.ui.theme.MiTiendita360Theme
@@ -144,37 +147,53 @@ class SupplierInsertActivity : ComponentActivity() {
                                 .background(color = Fondo1)
                                 .padding(horizontal = 40.dp)
                         ){
-                            TextFieldChevere(
+                            TextFieldChevere2(
                                 value = ruc,
                                 onValueChange = { ruc = it },
                                 label = "Ruc:",
-                                placeholder = ""
+                                placeholder = "",
+                                imeAction = ImeAction.Next,
+                                enabled = true,
+                                color = Color.White,
+                                keyboarType = KeyboardType.Number
                             )
 
                             Spacer(modifier = Modifier.padding(5.dp))
 
-                            TextFieldChevere(
+                            TextFieldChevere2(
                                 value = nombre,
                                 onValueChange = { nombre = it },
                                 label = "Nombre:",
-                                placeholder = ""
+                                placeholder = "",
+                                imeAction = ImeAction.Next,
+                                enabled = true,
+                                color = Color.White,
+                                keyboarType = KeyboardType.Text
                             )
 
                             Spacer(modifier = Modifier.padding(5.dp))
 
-                            TextFieldChevere(
+                            TextFieldChevere2(
                                 value = direccion,
                                 onValueChange = { direccion = it },
                                 label = "Dirección:",
-                                placeholder = ""
+                                placeholder = "",
+                                imeAction = ImeAction.Next,
+                                enabled = true,
+                                color = Color.White,
+                                keyboarType = KeyboardType.Text
                             )
                             Spacer(modifier = Modifier.padding(5.dp))
 
-                            TextFieldChevere(
+                            TextFieldChevere2(
                                 value = telefono,
                                 onValueChange = {  telefono = it },
                                 label = "Teléfono:",
-                                placeholder = ""
+                                placeholder = "",
+                                imeAction = ImeAction.Next,
+                                enabled = true,
+                                color = Color.White,
+                                keyboarType = KeyboardType.Number
                             )
                             Spacer(modifier = Modifier.padding(70.dp))
                         }

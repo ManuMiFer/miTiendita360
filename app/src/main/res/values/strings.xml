@@ -13,4 +13,10 @@
     <string name="title_activity_search_product">SearchProductActivity</string>
     <string name="title_activity_sale_history">SaleHistoryActivity</string>
     <string name="title_activity_sale_detail">SaleDetailActivity</string>
+    <string name="title_activity_scan_receipt">ScanReceiptActivity</string>
+    <string name="title_activity_complete_purchase">CompletePurchaseActivity</string>
+    <string name="title_activity_review_receipt">ReviewReceiptActivity</string>
+    <string name="title_activity_purcharse_detail">PurcharseDetailActivity</string>
+    <string name="title_activity_alert">AlertActivity</string>
+    <string name="title_activity_inventory_losses">InventoryLossesActivity</string>
 </resources>

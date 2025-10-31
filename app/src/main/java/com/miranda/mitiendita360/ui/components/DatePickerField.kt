@@ -120,7 +120,6 @@ fun DatePickerField2(
     selectedDate: String,
     onDateSelected: (String) -> Unit,
     modifier: Modifier = Modifier, // Modifier es ahora el tercer parámetro y opcional
-    // --- NUEVOS PARÁMETROS PARA PERSONALIZACIÓN ---
     placeholderText: String = "Filtrar por Fecha",
     containerColor: Color = VerdeLimon,
     contentColor: Color = Fondo1, // Color para el ícono y el texto del placeholder

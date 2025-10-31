@@ -44,9 +44,10 @@ import androidx.compose.material.icons.filled.RemoveRedEye
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -71,6 +72,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.lifecycleScope
 import coil.compose.rememberAsyncImagePainter
 import com.google.firebase.auth.FirebaseAuth
@@ -79,7 +81,8 @@ import com.miranda.mitiendita360.models.Producto
 import com.miranda.mitiendita360.models.StatusUpdateRequest
 import com.miranda.mitiendita360.network.RetrofitClient
 import com.miranda.mitiendita360.ui.components.ActionButton
-import com.miranda.mitiendita360.ui.components.TextFieldChevere2
+import com.miranda.mitiendita360.ui.components.ActionButton2
+import com.miranda.mitiendita360.ui.components.SearchTextField
 import com.miranda.mitiendita360.ui.theme.Celeste
 import com.miranda.mitiendita360.ui.theme.Fondo1
 import com.miranda.mitiendita360.ui.theme.GrisClaro
@@ -397,11 +400,11 @@ class InventoryActivity : ComponentActivity() {
 
                     ) {
                         Row (){
-                            TextFieldChevere2(
+                            SearchTextField(
                                 modifier = Modifier.weight(1f),
                                 value = searchQuery,
                                 onValueChange = onSearchQueryChange, // Conectamos la función de búsqueda
-                                placeholder = "Buscar producto...",
+                                placeholder = "Buscar",
                                 imeAction = ImeAction.Search,
                                 keyboardActions = KeyboardActions(
                                     onSearch = {
@@ -411,7 +414,20 @@ class InventoryActivity : ComponentActivity() {
                                     }
                                 )
                             )
-                            Spacer(modifier = Modifier.width(10.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            //Boton de Perdidas
+                            ActionButton2(
+                                onClick = {
+                                    val intent = Intent(context, InventoryLossesActivity::class.java)
+                                    context.startActivity(intent)
+                                },
+                                iconResource =  R.drawable.losses,
+                                backgroundColor =  Fondo1,
+                                iconColor =  Color.White,
+                                buttonSize = 50.dp,
+                                iconSize = 24.dp
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
                             ActionButton(
                                 onClick = {
                                     // Cambia entre estado 1 (activos) y 0 (inactivos)
@@ -466,7 +482,7 @@ class InventoryActivity : ComponentActivity() {
                                 }
                                 is CategoryUiState.Success -> {
                                     items(state.categories, key = { it.id }) { categoria ->
-                                        val imageUrl = "https://manuelmirandafernandez.com/imagenes/categoria${categoria.id}.png"
+                                        val imageUrl = "${BuildConfig.API_BASE_URL}/imagenes/categoria${categoria.id}.png"
 
                                         // --- LÓGICA CORREGIDA AQUÍ ---
 
@@ -567,7 +583,7 @@ fun ProductItemCard(
     ) {
     val context = LocalContext.current
     val imageUrl = if (!product.imagen.isNullOrBlank()) {
-        "https://manuelmirandafernandez.com/imagenes/${product.imagen}"
+        "${BuildConfig.API_BASE_URL}/imagenes/${product.imagen}"
     } else {
         R.drawable.box
     }
@@ -658,7 +674,7 @@ fun CategoryItem(
             .border(2.dp, borderColor, CircleShape) // Borde para indicar selección
             .padding(imagePadding) // Padding interno para que la imagen se achique un poco
             .clip(CircleShape) // Volvemos a cortar por si el padding afecta
-            .background(GrisClaro)
+            .background(Fondo1)
             .padding(10.dp)
     ) {
         if (isAllButton) {
@@ -694,32 +710,38 @@ fun InventoryDialogs(
         is DialogState.Hidden -> { /* No hacer nada */ }
 
         is DialogState.ConfirmDelete -> {
-            AlertDialog(
-                onDismissRequest = onDismiss,
-                containerColor = Color.White,
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Icono de Eliminar",
-                        tint = Fondo1,
-                        modifier = Modifier.size(100.dp)
-                    )
-                },
-                title = {
+            Dialog (
+                onDismissRequest = onDismiss
+            ){
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = GrisClaro2),
+                    modifier = Modifier.fillMaxWidth() // O un ancho específico con .width(300.dp)
+                ) {
                     Column {
-                        Row {
-                            Column {
+                        Row (
+                            verticalAlignment = Alignment.CenterVertically
+                        ){
+                            Column (
+                                modifier = Modifier.weight(1f)
+                            ){
                                 Text("Eliminar Producto",
                                     color = Fondo1,
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.Bold
 
-                                    )
+                                )
                                 Text("¿Estas seguro que desea eliminar el producto ${state.product.nombre}?",
-                                        color = GrisClaro,
+                                    color = GrisClaro,
                                     fontSize = 20.sp,
                                 )
                             }
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Icono de Eliminar",
+                                tint = Fondo1,
+                                modifier = Modifier.size(80.dp)
+                            )
                         }
                         Spacer(modifier = Modifier.height(16.dp))
 
@@ -752,42 +774,46 @@ fun InventoryDialogs(
                             ) { Text("ELIMINAR") }
                         }
                     }
-                },
-                confirmButton = {
-                },
-                dismissButton = {
-
                 }
-            )
+            }
         }
 
         is DialogState.ConfirmDeactivate -> {
-            AlertDialog(
+            Dialog(
                 onDismissRequest = onDismiss,
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.DoDisturbAlt,
-                        contentDescription = "Icono de Eliminar",
-                        tint = Fondo1,
-                        modifier = Modifier.size(100.dp)
-                    )
-                },
-                containerColor = Color.White,
-                text = {
-                    Column {
-                        Row {
-                            Column {
-                                Text("Desactivar Producto",
+            ){
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = GrisClaro2),
+                    modifier = Modifier.fillMaxWidth() // O un ancho específico con .width(300.dp)
+                ) {
+                    Column (
+                        modifier = Modifier.padding(24.dp)
+                    ){
+                        Row (
+                            verticalAlignment = Alignment.CenterVertically,
+                        ){
+                            Column (modifier = Modifier.weight(1f)){
+                                Text(
+                                    "Desactivar Producto",
                                     color = Fondo1,
-                                    fontSize = 20.sp,
+                                    fontSize = 19.sp,
                                     fontWeight = FontWeight.Bold
 
                                 )
-                                Text("El producto ${state.product.nombre} tiene ventas, solo puedes desactivarlo.",
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    "El producto ${state.product.nombre} tiene ventas, solo puedes desactivarlo.",
                                     color = GrisClaro,
-                                    fontSize = 20.sp,
+                                    fontSize = 15.sp,
                                 )
                             }
+                            Icon(
+                                imageVector = Icons.Default.DoDisturbAlt,
+                                contentDescription = "Icono de Desactivar",
+                                tint = Fondo1,
+                                modifier = Modifier.size(80.dp)
+                            )
                         }
                         Spacer(modifier = Modifier.height(16.dp))
 
@@ -820,13 +846,8 @@ fun InventoryDialogs(
                             ) { Text("DESACTIVAR") }
                         }
                     }
-
-                },
-                confirmButton = {
-                },
-                dismissButton = {
                 }
-            )
+            }
         }
     }
 }

@@ -16,7 +16,7 @@ data class Producto(
     val codBarras: String?,
     val idProveedor: String,
     val idUsuario: String,
-    val idCategoria: Int,
+    val idCategoria: Int?,
 
     val estado: Int? = 1,
     val id: Int? = null,

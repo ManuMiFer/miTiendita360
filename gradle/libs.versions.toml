@@ -3,6 +3,7 @@ accompanistPermissions = "0.37.3"
 agp = "8.13.0"
 barcodeScanning = "17.3.0"
 cameraCore = "1.5.0"
+coilCompose = "2.7.0"
 converterGson = "3.0.0"
 firebaseBom = "34.3.0"
 kotlin = "2.2.20"
@@ -13,9 +14,14 @@ espressoCore = "3.7.0"
 lifecycleRuntimeKtx = "2.9.4"
 activityCompose = "1.11.0"
 composeBom = "2025.09.01"
-playServicesMlkitBarcodeScanning = "18.4.0"
 retrofit = "3.0.0"
-playServicesCodeScanner = "16.1.0"
+textRecognition = "16.0.1"
+navigationRuntimeKtx = "2.9.5"
+navigationCompose = "2.9.5"
+generativeai = "0.9.0"
+common = "0.10.0"
+
+
 
 
 [libraries]
@@ -27,6 +33,7 @@ androidx-camera-view = { module = "androidx.camera:camera-view", version.ref = "
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 barcode-scanning = { module = "com.google.mlkit:barcode-scanning", version.ref = "barcodeScanning" }
+coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
 converter-scalars = { module = "com.squareup.retrofit2:converter-scalars", version.ref = "converterGson" }
 firebase-auth = { module = "com.google.firebase:firebase-auth" }
@@ -44,9 +51,13 @@ androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
-play-services-mlkit-barcode-scanning = { module = "com.google.android.gms:play-services-mlkit-barcode-scanning", version.ref = "playServicesMlkitBarcodeScanning" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
-play-services-code-scanner = { group = "com.google.android.gms", name = "play-services-code-scanner", version.ref = "playServicesCodeScanner" }
+text-recognition = { module = "com.google.mlkit:text-recognition", version.ref = "textRecognition" }
+androidx-navigation-runtime-ktx = { group = "androidx.navigation", name = "navigation-runtime-ktx", version.ref = "navigationRuntimeKtx" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+generativeai = { group = "com.google.ai.client.generativeai", name = "generativeai", version.ref = "generativeai" }
+common = { group = "com.google.ai.client.generativeai", name = "common", version.ref = "common" }
+
 
 
 [plugins]

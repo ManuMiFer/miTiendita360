@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -30,7 +32,10 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.miranda.mitiendita360.ui.theme.xd
 
@@ -97,7 +102,7 @@ fun TextFieldChevere(
     }
 }
 @Composable
-fun TextFieldChevere2(
+fun SearchTextField(
     // Parámetros que el Composable necesita para funcionar
     value: String, onValueChange: (String) -> Unit,
     placeholder: String,
@@ -106,9 +111,6 @@ fun TextFieldChevere2(
     modifier: Modifier = Modifier
 
 ) {
-    // Controladores para el teclado y el foco
-    val keyboardController = LocalSoftwareKeyboardController.current
-    val focusManager = LocalFocusManager.current
     var isFocused by remember { mutableStateOf(false) }
 
     Column(
@@ -150,6 +152,205 @@ fun TextFieldChevere2(
                     text = placeholder,
                     color = Color.Gray,
                     modifier = Modifier.padding(horizontal = 50.dp),
+                )
+            }
+        }
+    }
+}
+@Composable
+fun TextFieldChevere2(
+    // Parámetros que el Composable necesita para funcionar
+    value: String, onValueChange: (String) -> Unit,
+    label: String,
+    placeholder: String,
+    imeAction: ImeAction = ImeAction.Next,
+    keyboarType: KeyboardType = KeyboardType.Text,
+    enabled: Boolean = true,
+    color: Color
+) {
+    // Controladores para el teclado y el foco
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+    var isFocused by remember { mutableStateOf(false) }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // Etiqueta del campo de texto
+        Text(
+            text = label,
+            textAlign = TextAlign.Start,
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 4.dp) // Espacio entre etiqueta y campo
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(shape = RoundedCornerShape(13.dp))
+                .background(color),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            // Campo de texto básico
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .onFocusChanged { focusState ->
+                        isFocused = focusState.isFocused
+                    },
+                cursorBrush = SolidColor(Color.Gray),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions.Default.copy(imeAction = imeAction, keyboardType = keyboarType),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) },
+                    onDone = {
+                        keyboardController?.hide()
+                        focusManager.clearFocus()
+                    }
+                ),
+                enabled = enabled,
+            )
+            // Placeholder que aparece cuando el campo está vacío y sin foco
+            if (!isFocused && value.isEmpty()) {
+                Text(
+                    text = placeholder,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SearchTextField2(
+    // Parámetros que el Composable necesita para funcionar
+    value: String, onValueChange: (String) -> Unit,
+    placeholder: String,
+    imeAction: ImeAction = ImeAction.Next,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
+    modifier: Modifier = Modifier
+
+) {
+    var isFocused by remember { mutableStateOf(false) }
+
+    Column(
+        verticalArrangement = Arrangement.Center,
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(shape = RoundedCornerShape(13.dp))
+                .background(xd),
+            contentAlignment = Alignment.CenterStart
+        ) {
+
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = "Search Icon",
+                tint = Color.Gray,
+                modifier = Modifier.padding(start = 16.dp)
+            )
+            // Campo de texto básico
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp, horizontal = 50.dp)
+                    .onFocusChanged { focusState ->
+                        isFocused = focusState.isFocused
+                    },
+                cursorBrush = SolidColor(Color.Gray),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions.Default.copy(imeAction = imeAction),
+                keyboardActions = keyboardActions
+            )
+            // Placeholder que aparece cuando el campo está vacío y sin foco
+            if (!isFocused && value.isEmpty()) {
+                Text(
+                    text = placeholder,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(horizontal = 50.dp),
+                )
+            }
+        }
+    }
+}
+@Composable
+fun TextAreaChevere(
+    // Parámetros que el Composable necesita para funcionar
+    value: String, onValueChange: (String) -> Unit,
+    label: String,
+    placeholder: String,
+    // La acción por defecto para un campo multi-línea suele ser 'None' o 'Default'
+    imeAction: ImeAction = ImeAction.Default,
+    keyboarType: KeyboardType = KeyboardType.Text,
+    enabled: Boolean = true,
+    color: Color,
+    // Parámetro opcional para definir la altura mínima
+    minHeight: Dp = 120.dp
+) {
+    // Controladores para el teclado y el foco
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+    var isFocused by remember { mutableStateOf(false) }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // Etiqueta del campo de texto
+        Text(
+            text = label,
+            textAlign = TextAlign.Start,
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 4.dp) // Espacio entre etiqueta y campo
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(shape = RoundedCornerShape(13.dp))
+                .background(color),
+            // Alineamos el contenido (placeholder) arriba a la izquierda
+            contentAlignment = Alignment.TopStart
+        ) {
+            // Campo de texto básico
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = minHeight) // <-- CAMBIO CLAVE: Altura mínima
+                    .padding(16.dp)
+                    .onFocusChanged { focusState ->
+                        isFocused = focusState.isFocused
+                    },
+                cursorBrush = SolidColor(Color.Gray),
+                // --- CAMBIOS CLAVE PARA MULTI-LÍNEA ---
+                // singleLine = true, // <-- ELIMINADO para permitir múltiples líneas
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    // Capitaliza las oraciones automáticamente, ideal para descripciones
+                    capitalization = KeyboardCapitalization.Sentences,
+                    imeAction = imeAction,
+                    keyboardType = keyboarType
+                ),
+                keyboardActions = KeyboardActions(
+                    // La acción por defecto es suficiente, el usuario usa "Enter" para nueva línea
+                    onDone = {
+                        keyboardController?.hide()
+                        focusManager.clearFocus()
+                    }
+                ),
+                enabled = enabled,
+            )
+            // Placeholder que aparece cuando el campo está vacío
+            // Se alinea arriba a la izquierda gracias al 'contentAlignment' del Box
+            if (value.isEmpty()) {
+                Text(
+                    text = placeholder,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(16.dp),
                 )
             }
         }

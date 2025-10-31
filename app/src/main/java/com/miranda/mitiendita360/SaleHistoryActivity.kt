@@ -42,7 +42,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -51,14 +50,13 @@ import com.google.firebase.auth.FirebaseAuth
 import com.miranda.mitiendita360.models.Venta
 import com.miranda.mitiendita360.network.RetrofitClient
 import com.miranda.mitiendita360.ui.components.DatePickerField2
-import com.miranda.mitiendita360.ui.components.TextFieldChevere2
+import com.miranda.mitiendita360.ui.components.SearchTextField
 import com.miranda.mitiendita360.ui.theme.Fondo1
 import com.miranda.mitiendita360.ui.theme.GrisClaro
 import com.miranda.mitiendita360.ui.theme.GrisClaro2
 import com.miranda.mitiendita360.ui.theme.MiTiendita360Theme
 import com.miranda.mitiendita360.ui.theme.VerdeLimon
 import kotlinx.coroutines.launch
-import kotlin.text.format
 
 sealed interface SaleHistoryUiState {
     data class Success(val ventas: List<Venta>) : SaleHistoryUiState
@@ -193,7 +191,7 @@ class SaleHistoryActivity : ComponentActivity() {
                                 .padding(horizontal = 40.dp)
                         ) {
                             // --- UI de Filtros ---
-                            TextFieldChevere2(
+                            SearchTextField(
                                 value = searchQuery,
                                 onValueChange = { searchQuery = it },
                                 placeholder = "Buscar por producto...",

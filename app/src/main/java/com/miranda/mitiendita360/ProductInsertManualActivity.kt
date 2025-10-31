@@ -3,11 +3,8 @@ package com.miranda.mitiendita360
 
 import BarcodeAnalyzer
 import ScannerView
-import android.app.DatePickerDialog
 import android.content.ContentValues
 import android.content.Context
-import android.content.Intent
-import android.icu.util.Calendar
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -75,6 +72,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
@@ -94,7 +92,9 @@ import com.miranda.mitiendita360.network.ProductoService
 import com.miranda.mitiendita360.network.ProveedorService
 import com.miranda.mitiendita360.ui.components.BotonChevere
 import com.miranda.mitiendita360.ui.components.DatePickerField
+import com.miranda.mitiendita360.ui.components.DropdownChevere
 import com.miranda.mitiendita360.ui.components.TextFieldChevere
+import com.miranda.mitiendita360.ui.components.TextFieldChevere2
 import com.miranda.mitiendita360.ui.theme.Fondo1
 import com.miranda.mitiendita360.ui.theme.GrisClaro
 import com.miranda.mitiendita360.ui.theme.MiTiendita360Theme
@@ -106,8 +106,6 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.text.SimpleDateFormat
-import java.util.Locale
 import java.util.concurrent.Executors
 
 class WideOvalBottomShape(
@@ -141,7 +139,7 @@ class WideOvalBottomShape(
 class ProductInsertActivity : ComponentActivity() {
 
     private val retrofit = Retrofit.Builder()
-        .baseUrl("https://manuelmirandafernandez.com/")
+        .baseUrl("${BuildConfig.API_BASE_URL}")
         .addConverterFactory(GsonConverterFactory.create())
         .build()
     private val categoriaService = retrofit.create(CategoriaService::class.java)
@@ -504,26 +502,38 @@ class ProductInsertActivity : ComponentActivity() {
                                        modifier = Modifier.fillMaxWidth(),
                                        horizontalArrangement = Arrangement.spacedBy(16.dp)
                                    ) {
-
+                                       val pCompra = precioCompra.toDoubleOrNull()
+                                       val pVenta = precioVenta.toDoubleOrNull()
                                        Column(modifier = Modifier.weight(1f)) { // Envuelve en una Column con weight
-                                           TextFieldChevere(
+                                           TextFieldChevere2(
                                                value = precioCompra,
                                                onValueChange = { precioCompra = it },
                                                label = "Precio de Compra:",
                                                placeholder = "S/0.00",
-                                               imeAction = ImeAction.Next
+                                               imeAction = ImeAction.Next,
+                                               enabled = true,
+                                               color = Color.White,
+                                               keyboarType = KeyboardType.Decimal
                                            )
                                        }
 
                                        Column(modifier = Modifier.weight(1f)) { // Envuelve en una Column con weight
-                                           TextFieldChevere(
+                                           TextFieldChevere2(
                                                value = precioVenta, // Usa la variable de estado correcta
                                                onValueChange = {
                                                    precioVenta = it
                                                }, // Usa el onValueChange correcto
                                                label = "Precio de Venta:",
                                                placeholder = "S/0.00",
-                                               imeAction = ImeAction.Next
+                                               imeAction = ImeAction.Next,
+                                               enabled = true,
+                                               color = if (pCompra == null || pVenta == null) {
+                                                   Color.White
+                                               } else {
+                                                   // 3. Ahora sí, compara los números. El color será Rojo si la venta es menor que la compra.
+                                                   if (pVenta > pCompra) Color.White else Color.Red
+                                               },
+                                               keyboarType = KeyboardType.Decimal
                                            )
                                        }
                                    }
@@ -548,26 +558,39 @@ class ProductInsertActivity : ComponentActivity() {
                                        modifier = Modifier.fillMaxWidth(),
                                        horizontalArrangement = Arrangement.spacedBy(16.dp)
                                    ) {
+                                       val sActual = stockActual.toDoubleOrNull()
+                                       val sMinimo = stockMinimo.toDoubleOrNull()
                                        // Campo de texto para el Precio
                                        Column(modifier = Modifier.weight(1f)) { // Envuelve en una Column con weight
-                                           TextFieldChevere(
+                                           TextFieldChevere2(
                                                value = stockActual,
                                                onValueChange = { stockActual = it },
                                                label = "Stock Actual:",
                                                placeholder = "",
-                                               imeAction = ImeAction.Next
+                                               imeAction = ImeAction.Next,
+                                               enabled = true,
+                                               color = Color.White,
+                                               keyboarType = KeyboardType.Decimal
                                            )
                                        }
                                        // Campo de texto para el Stock Actual
                                        Column(modifier = Modifier.weight(1f)) { // Envuelve en una Column con weight
-                                           TextFieldChevere(
+                                           TextFieldChevere2(
                                                value = stockMinimo, // Usa la variable de estado correcta
                                                onValueChange = {
                                                    stockMinimo = it
                                                }, // Usa el onValueChange correcto
                                                label = "Stock Minimo:",
                                                placeholder = " ",
-                                               imeAction = ImeAction.Next
+                                               imeAction = ImeAction.Next,
+                                               enabled = true,
+                                               color = if (sActual == null || sMinimo == null) {
+                                                   Color.White
+                                               } else {
+                                                   // 3. Ahora sí, compara los números. El color será Rojo si la venta es menor que la compra.
+                                                   if (sActual > sMinimo) Color.White else Color.Red
+                                               },
+                                               keyboarType = KeyboardType.Decimal
                                            )
                                        }
                                    }
@@ -585,12 +608,15 @@ class ProductInsertActivity : ComponentActivity() {
                                        Column(
                                            modifier = Modifier.weight(6f)
                                        ) {
-                                           TextFieldChevere(
+                                           TextFieldChevere2(
                                                value = codigoBarra,
                                                onValueChange = { codigoBarra = it },
                                                label = "Codigo de Barras:",
                                                placeholder = " ",
-                                               imeAction = ImeAction.Next
+                                               imeAction = ImeAction.Next,
+                                               enabled = true,
+                                               color = Color.White,
+                                               keyboarType = KeyboardType.Number
                                            )
                                        }
                                        Column(
@@ -643,6 +669,20 @@ class ProductInsertActivity : ComponentActivity() {
                                             if (nombre.isBlank() || categoriaId == null || proveedorId == null || precioVenta.isBlank()) {
                                                 Toast.makeText(this@ProductInsertActivity,
                                                     "Nombre, categoría, proveedor y precio de venta son obligatorios.", Toast.LENGTH_LONG).show()
+                                                return@BotonChevere
+                                            }
+
+                                            val pCompra = precioCompra.toDoubleOrNull()
+                                            val pVenta = precioVenta.toDoubleOrNull()
+                                            val sActual = stockActual.toDoubleOrNull()
+                                            val sMinimo = stockMinimo.toDoubleOrNull()
+
+                                            if (pVenta != null && pCompra != null && pVenta <= pCompra) {
+                                                Toast.makeText(this@ProductInsertActivity, "El precio de venta debe ser mayor al de compra.", Toast.LENGTH_SHORT).show()
+                                                return@BotonChevere
+                                            }
+                                            if (sMinimo != null && sActual != null && sMinimo >= sActual) {
+                                                Toast.makeText(this@ProductInsertActivity, "El stock mínimo debe ser menor al actual.", Toast.LENGTH_SHORT).show()
                                                 return@BotonChevere
                                             }
 
@@ -718,104 +758,6 @@ class ProductInsertActivity : ComponentActivity() {
                                 }
                             }
                         }
-                    }
-                }
-            }
-        }
-    }
-
-
-
-    @OptIn(ExperimentalMaterial3Api::class)
-    @Composable
-    fun <T> DropdownChevere(
-        label: String,
-        options: List<T>,
-        selectedValue: String,
-        onValueChange: (T) -> Unit,
-        optionToString: (T) -> String
-    ) {
-        var expanded by remember { mutableStateOf(false) }
-        val rotationState by animateFloatAsState(
-            targetValue = if (expanded) 180f else 0f,
-            label = "Dropdown Arrow Rotation" // Etiqueta para herramientas de depuración
-        )
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            Text(
-                text = label,
-                textAlign = TextAlign.Start,
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded },
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                BasicTextField(
-                    value = selectedValue,
-                    onValueChange = {},
-                    readOnly = true,
-                    modifier = Modifier
-                        .menuAnchor()
-                        .fillMaxWidth()
-                        .height(50.dp),
-                    textStyle = LocalTextStyle.current.copy(
-                        textAlign = TextAlign.Start
-                    )
-                ) { innerTextField ->
-                    OutlinedTextFieldDefaults.DecorationBox(
-                        value = selectedValue,
-                        innerTextField = innerTextField,
-                        enabled = true,
-                        singleLine = true,
-                        visualTransformation = VisualTransformation.None,
-                        interactionSource = remember { MutableInteractionSource() },
-                        contentPadding = PaddingValues(horizontal = 16.dp),
-                        trailingIcon = { Icon(
-                            imageVector = Icons.Default.ArrowDropDown ,
-                            contentDescription = "Desplegar menú",
-                            tint = VerdeLimon,
-                            modifier = Modifier.rotate(rotationState)
-                        ) },
-                        container = {
-                            OutlinedTextFieldDefaults.ContainerBox(
-                                enabled = true,
-                                isError = false,
-                                interactionSource = remember { MutableInteractionSource() },
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    unfocusedContainerColor = Color.White,
-                                    focusedContainerColor = Color.White,
-                                    unfocusedBorderColor = Color.Transparent,
-                                    focusedBorderColor = Color.Transparent
-                                ),
-                                shape = RoundedCornerShape(13.dp),
-                            )
-                        }
-                    )
-                }
-                // Este es el menú desplegable que aparece
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false },
-                    modifier = Modifier.background(Color.White)
-                ) {
-                    options.forEach { option ->
-                        DropdownMenuItem(
-                            text = { Text(
-                                text = optionToString(option),
-                                color = Color.Black)
-                                },
-                            onClick = {
-                                onValueChange(option) // Actualiza el valor seleccionado
-                                expanded = false      // Cierra el menú
-                            }
-                        )
                     }
                 }
             }

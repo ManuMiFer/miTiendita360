@@ -18,3 +18,7 @@ val GrisClaro2 = Color(0xFFcacad6)
 val Celeste = Color(0xFF0571d3)
 val Lila = Color(0xFFbc9bff)
 val Rojito = Color(0xFFed4932)
+
+val Rojo = Color(0xFFaf493b)
+val Verde = Color(0xFF7fab4d)
+val Amarillo = Color(0xFFbbb456)

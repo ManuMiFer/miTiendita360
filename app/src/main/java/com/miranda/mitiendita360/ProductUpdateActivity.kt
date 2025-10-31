@@ -65,6 +65,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.isEmpty
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
@@ -72,6 +73,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -89,6 +91,7 @@ import com.miranda.mitiendita360.network.ProductoService
 import com.miranda.mitiendita360.network.ProveedorService
 import com.miranda.mitiendita360.ui.components.BotonChevere
 import com.miranda.mitiendita360.ui.components.TextFieldChevere
+import com.miranda.mitiendita360.ui.components.TextFieldChevere2
 import com.miranda.mitiendita360.ui.theme.Fondo1
 import com.miranda.mitiendita360.ui.theme.GrisClaro
 import com.miranda.mitiendita360.ui.theme.MiTiendita360Theme
@@ -111,7 +114,7 @@ sealed interface ProductUpdateUiState {
 class ProductUpdateActivity : ComponentActivity() {
 
     private val retrofit = Retrofit.Builder()
-        .baseUrl("https://manuelmirandafernandez.com/")
+        .baseUrl(BuildConfig.API_BASE_URL)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
     private val categoriaService = retrofit.create(CategoriaService::class.java)
@@ -144,7 +147,6 @@ class ProductUpdateActivity : ComponentActivity() {
             var codigoBarra by remember { mutableStateOf("") }
             var imagenUrl by remember { mutableStateOf<String?>(null) }
             var mostrarScanner by remember { mutableStateOf(false) }
-
             val context = LocalContext.current
             val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
             val previewView = remember { PreviewView(context) }
@@ -235,7 +237,7 @@ class ProductUpdateActivity : ComponentActivity() {
                             val product = responseProd.data
 
                             if (product.imagen != null) {
-                                val imageUrlToRemove = "https://manuelmirandafernandez.com/imagenes/${product.imagen}"
+                                val imageUrlToRemove = "${BuildConfig.API_BASE_URL}imagenes/${product.imagen}"
                                 val imageLoader = coil.Coil.imageLoader(context)
                                 // Elimina la imagen de la caché de memoria Y de disco
                                 imageLoader.memoryCache?.remove(coil.memory.MemoryCache.Key(imageUrlToRemove))
@@ -274,9 +276,6 @@ class ProductUpdateActivity : ComponentActivity() {
                     }
                 }
             }
-
-
-
             fun createImageUri(context: Context): Uri {
                 val contentValues = ContentValues().apply {
                     put(MediaStore.Images.Media.DISPLAY_NAME, "new_image_${System.currentTimeMillis()}.jpg")
@@ -416,7 +415,7 @@ class ProductUpdateActivity : ComponentActivity() {
                                Column (
                                    Modifier
                                        .clip(
-                                           shape = _root_ide_package_.com.miranda.mitiendita360.WideOvalBottomShape(
+                                           shape = WideOvalBottomShape(
                                                arcHeight = 200f, // Profundidad de la curva
                                                horizontalControlOffset = 180f
                                            )
@@ -464,7 +463,7 @@ class ProductUpdateActivity : ComponentActivity() {
                                                    if (imagenUri == null) {
                                                        val imageRequest =
                                                            ImageRequest.Builder(LocalContext.current)
-                                                               .data("https://manuelmirandafernandez.com/imagenes/${imagenUrl}")
+                                                               .data("${BuildConfig.API_BASE_URL}imagenes/${imagenUrl}")
                                                                .crossfade(true) // Opcional: añade una bonita transición de fundido
                                                                .diskCachePolicy(CachePolicy.ENABLED) // Permite guardar en caché del disco
                                                                .memoryCachePolicy(CachePolicy.ENABLED) // Permite guardar en caché de memoria (más rápido)
@@ -543,24 +542,37 @@ class ProductUpdateActivity : ComponentActivity() {
                                    ) {
 
                                        Column(modifier = Modifier.weight(1f)) { // Envuelve en una Column con weight
-                                           TextFieldChevere(
+                                           TextFieldChevere2(
                                                value = precioCompra,
                                                onValueChange = { precioCompra = it },
                                                label = "Precio de Compra:",
                                                placeholder = "S/0.00",
-                                               imeAction = ImeAction.Next
+                                               imeAction = ImeAction.Next,
+                                               enabled = false,
+                                               keyboarType = KeyboardType.Decimal,
+                                               color = Color.White
                                            )
                                        }
-
                                        Column(modifier = Modifier.weight(1f)) { // Envuelve en una Column con weight
-                                           TextFieldChevere(
+
+                                           val pCompra = precioCompra.toDoubleOrNull()
+                                           val pVenta = precioVenta.toDoubleOrNull()
+                                           TextFieldChevere2(
                                                value = precioVenta, // Usa la variable de estado correcta
                                                onValueChange = {
                                                    precioVenta = it
                                                }, // Usa el onValueChange correcto
                                                label = "Precio de Venta:",
                                                placeholder = "S/0.00",
-                                               imeAction = ImeAction.Next
+                                               imeAction = ImeAction.Next,
+                                               enabled = true,
+                                               keyboarType = KeyboardType.Decimal,
+                                               color = if (pCompra == null || pVenta == null) {
+                                                   Color.White
+                                               } else {
+                                                   // 3. Ahora sí, compara los números. El color será Rojo si la venta es menor que la compra.
+                                                   if (pVenta > pCompra) Color.White else Color.Red
+                                               },
                                            )
                                        }
                                    }
@@ -587,24 +599,37 @@ class ProductUpdateActivity : ComponentActivity() {
                                    ) {
                                        // Campo de texto para el Precio
                                        Column(modifier = Modifier.weight(1f)) { // Envuelve en una Column con weight
-                                           TextFieldChevere(
+                                           TextFieldChevere2(
                                                value = stockActual,
                                                onValueChange = { stockActual = it },
                                                label = "Stock Actual:",
                                                placeholder = "",
-                                               imeAction = ImeAction.Next
+                                               imeAction = ImeAction.Next,
+                                               enabled = false,
+                                               keyboarType = KeyboardType.Number,
+                                               color = Color.White
                                            )
                                        }
                                        // Campo de texto para el Stock Actual
                                        Column(modifier = Modifier.weight(1f)) { // Envuelve en una Column con weight
-                                           TextFieldChevere(
+                                           val sActual = stockActual.toDoubleOrNull()
+                                           val sMinimo = stockMinimo.toDoubleOrNull()
+                                           TextFieldChevere2(
                                                value = stockMinimo, // Usa la variable de estado correcta
                                                onValueChange = {
                                                    stockMinimo = it
                                                }, // Usa el onValueChange correcto
                                                label = "Stock Minimo:",
                                                placeholder = " ",
-                                               imeAction = ImeAction.Next
+                                               imeAction = ImeAction.Next,
+                                               enabled = true,
+                                               keyboarType = KeyboardType.Number,
+                                               color = if (sActual == null || sMinimo == null) {
+                                                   Color.White
+                                               } else {
+                                                   // 3. Ahora sí, compara los números. El color será Rojo si la venta es menor que la compra.
+                                                   if (sActual > sMinimo) Color.White else Color.Red
+                                               }
                                            )
                                        }
                                    }
@@ -622,12 +647,15 @@ class ProductUpdateActivity : ComponentActivity() {
                                        Column(
                                            modifier = Modifier.weight(6f)
                                        ) {
-                                           TextFieldChevere(
+                                           TextFieldChevere2(
                                                value = codigoBarra,
                                                onValueChange = { codigoBarra = it },
                                                label = "Codigo de Barras:",
                                                placeholder = " ",
-                                               imeAction = ImeAction.Next
+                                               imeAction = ImeAction.Next,
+                                               enabled = true,
+                                               keyboarType = KeyboardType.Number,
+                                               color = Color.White
                                            )
                                        }
                                        Column(
@@ -677,6 +705,18 @@ class ProductUpdateActivity : ComponentActivity() {
                                             if (nombre.isBlank() || categoriaId == null || proveedorId == null || precioVenta.isBlank()) {
                                                 Toast.makeText(this@ProductUpdateActivity, "Nombre, categoría, proveedor y precio de venta son obligatorios.", Toast.LENGTH_LONG).show()
                                                 return@BotonChevere
+                                            }
+
+                                            val pCompra = precioCompra.toDoubleOrNull()
+                                            val pVenta = precioVenta.toDoubleOrNull()
+                                            val sActual = stockActual.toDoubleOrNull()
+                                            val sMinimo = stockMinimo.toDoubleOrNull()
+
+                                            if (pVenta != null && pCompra != null && pVenta <= pCompra) {
+                                                Toast.makeText(this@ProductUpdateActivity, "El precio de venta debe ser mayor al de compra.", Toast.LENGTH_SHORT).show()
+                                            }
+                                            if (sMinimo != null && sActual != null && sMinimo >= sActual) {
+                                                Toast.makeText(this@ProductUpdateActivity, "El stock mínimo debe ser menor al actual.", Toast.LENGTH_SHORT).show()
                                             }
 
                                             // Iniciar la corrutina para las operaciones de red

@@ -111,12 +111,12 @@ class SaleInsertActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
 
-
+            var productosEnVenta = remember { mutableStateListOf<CartItem>() }
             val context = LocalContext.current
             val scope = rememberCoroutineScope()
 
             // --- 1. ESTADOS PRINCIPALES ---
-            val productosEnVenta = remember { mutableStateListOf<CartItem>() }
+            // --- 1. ESTADOS PRINCIPALES ---
             var showScanner by remember { mutableStateOf(false) }
 
 
@@ -199,6 +199,7 @@ class SaleInsertActivity : ComponentActivity() {
             val cameraPermissionState = rememberPermissionState(android.Manifest.permission.CAMERA)
 
             MiTiendita360Theme {
+
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     topBar = {
@@ -344,7 +345,7 @@ class SaleInsertActivity : ComponentActivity() {
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         AsyncImage(
-                                            model = "https://manuelmirandafernandez.com/imagenes/${cartItem.producto.imagen}", // Usa cartItem
+                                            model = "${BuildConfig.API_BASE_URL}imagenes/${cartItem.producto.imagen}", // Usa cartItem
                                             contentDescription = cartItem.producto.nombre,
                                             modifier = Modifier
                                                 .size(75.dp)
@@ -376,12 +377,19 @@ class SaleInsertActivity : ComponentActivity() {
                                             ) {
                                                 TextFielCantidad(
                                                     quantity = cartItem.quantity, // Usa la cantidad del cartItem
+                                                    stockDisponible = cartItem.producto.stockActual,
                                                     onQuantityChange = { newQuantity ->
                                                         // Actualiza la cantidad directamente en el objeto de la lista
-                                                        val index = productosEnVenta.indexOf(cartItem)
-                                                        if (index != -1) {
-                                                            productosEnVenta[index] = cartItem.copy(quantity = newQuantity)
+                                                        val updatedList = productosEnVenta.map {
+                                                            if (it.producto.id == cartItem.producto.id) {
+                                                                it.copy(quantity = newQuantity)
+                                                            } else {
+                                                                it
+                                                            }
                                                         }
+                                                        val filteredList = updatedList.filter { it.quantity > 0 }
+                                                        productosEnVenta.clear()
+                                                        productosEnVenta.addAll(filteredList)
                                                     }
                                                 )
                                                 Text(
@@ -597,6 +605,7 @@ class SaleInsertActivity : ComponentActivity() {
 @Composable
 fun TextFielCantidad(
     quantity: Int,
+    stockDisponible: Int,
     onQuantityChange: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -631,7 +640,7 @@ fun TextFielCantidad(
                 } else {
                     // Si no está vacío, intentamos convertirlo a número
                     val newQuantity = newValue.toIntOrNull()
-                    if (newQuantity != null && newQuantity <= 100) {
+                    if (newQuantity != null && newQuantity <= stockDisponible) {
                         // Solo actualizamos si es un número válido y menor o igual a 100
                         onQuantityChange(newQuantity)
                     }
@@ -666,7 +675,7 @@ fun TextFielCantidad(
             buttonSize = 20.dp,
             onClick = {
                 // Incrementa solo si es menor que 100
-                if (quantity < 100) {
+                if (quantity < stockDisponible) {
                     onQuantityChange(quantity + 1)
                 }
             }

@@ -1,3 +1,6 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -17,7 +20,28 @@ android {
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String","API_BASE_URL", "\"${project.findProperty("API_BASE_URL")}\"")
+
+        val localProperties = Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            localProperties.load(FileInputStream(localPropertiesFile))
+        }
+
+        buildConfigField(
+            "String",
+            "API_BASE_URL",
+            localProperties.getProperty("API_BASE_URL")
+        )
+        buildConfigField(
+            "String",
+            "GOOGLE_VISION_BASE_URL",
+            localProperties.getProperty("GOOGLE_VISION_BASE_URL")
+        )
+        buildConfigField(
+            "String",
+            "GOOGLE_API_KEY",
+            localProperties.getProperty("GOOGLE_API_KEY")
+        )
     }
 
     buildTypes {
@@ -38,8 +62,8 @@ android {
         freeCompilerArgs = listOf("-XXLanguage:+PropertyParamAnnotationDefaultTargetMode")
     }
     buildFeatures {
-        buildConfig = true
         compose = true
+        buildConfig = true
     }
 }
 
@@ -53,6 +77,10 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.navigation.runtime.ktx)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.generativeai)
+    implementation(libs.common)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -60,35 +88,28 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-
-    // Firebase
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.auth)
-
     // Retrofit
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation(libs.converter.scalars)
-
-    // Iconos
-    implementation(libs.androidx.compose.material.icons.extended)
-
+    // CameraX
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
-
-// ML Kit (para el análisis de códigos de barras)
-// Esta es la versión "empaquetada" que incluye el modelo y evita conflictos.
-    implementation(libs.barcode.scanning)
-
-// Librería para manejar permisos fácilmente en Compose (Opcional pero muy recomendada)
-
-    implementation(libs.accompanist.permissions)
-
+    // Iconos
+    implementation(libs.androidx.compose.material.icons.extended)
     // Coil para cargar imágenes desde URLs
-    implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation(libs.coil.compose)
+    // Librería para manejar permisos fácilmente en Compose (Opcional pero muy recomendada)
+    implementation(libs.accompanist.permissions)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    // ML Kit Barcode Scanning
+    implementation(libs.barcode.scanning)
+    // ML Kit Text Recognition
+    implementation(libs.text.recognition)
 
-
-
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    // Dentro del bloque dependencies { ... }
 }
