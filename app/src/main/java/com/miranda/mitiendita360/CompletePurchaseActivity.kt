@@ -53,6 +53,7 @@ import coil.request.ImageRequest
 import com.google.firebase.auth.FirebaseAuth
 import com.google.gson.Gson
 import com.miranda.mitiendita360.models.*
+import com.miranda.mitiendita360.network.ProductoService
 
 import com.miranda.mitiendita360.network.RetrofitClient
 import com.miranda.mitiendita360.ui.components.BotonChevere
@@ -101,6 +102,7 @@ class CompletePurchaseActivity : ComponentActivity() {
         }
         enableEdgeToEdge()
         setContent {
+
             MiTiendita360Theme {
                 // --- Estados ---
                 var listaProveedores by remember { mutableStateOf(listOf<Proveedor>()) }
@@ -173,8 +175,25 @@ class CompletePurchaseActivity : ComponentActivity() {
                     .build().also { it.setAnalyzer(executor, barcodeAnalyzer) }
                 }
 
-                // --- LaunchedEffect Unificado ---
-                // --- LaunchedEffect Unificado ---
+                LaunchedEffect(codigoBarra) {
+                    // Solo ejecutar si el código no está vacío
+                    if (codigoBarra.isNotBlank()) {
+                        val apiUrl = "https://world.openfoodfacts.org/api/v2/product/$codigoBarra.json?fields=brands"
+                        try {
+                            // Usamos la misma instancia de RetrofitClient
+                            val response = RetrofitClient.productoService.getBrandFromBarcode(apiUrl)
+                            if (response.status == 1 && !response.product?.brands.isNullOrBlank()) {
+                                // Si se encuentra una marca, la asignamos a nuestra variable de estado.
+                                marca = response.product!!.brands!!
+                                Log.d("API_CALL", "Marca encontrada: ${response.product.brands}")
+                            } else {
+                                Log.d("API_CALL", "Producto no encontrado o sin marca en OpenFoodFacts.")
+                            }
+                        } catch (e: Exception) {
+                            Log.e("API_CALL", "Error al llamar a OpenFoodFacts API", e)
+                        }
+                    }
+                }
                 LaunchedEffect(currentProductIndex) {
                     val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return@LaunchedEffect
 
@@ -189,7 +208,7 @@ class CompletePurchaseActivity : ComponentActivity() {
                                 if (!rucFromScan.isNullOrEmpty()) {
                                     listaProveedores.find { it.ruc?.trim() == rucFromScan }?.let {
                                         proveedorId = it.ruc
-                                        proveedorNombre = it.nombre
+                                        proveedorNombre = it.razonSocial
                                     }
                                 }
                             }
@@ -245,7 +264,7 @@ class CompletePurchaseActivity : ComponentActivity() {
                                 stockActual = if (savedState.stockActual > 0) savedState.stockActual.toString() else ""
                             }
                             listaCategorias.find { it.id == categoriaId }?.let { categoriaNombre = it.tipo }
-                            listaProveedores.find { it.ruc == proveedorId }?.let { proveedorNombre = it.nombre }
+                            listaProveedores.find { it.ruc == proveedorId }?.let { proveedorNombre = it.razonSocial }
 
                         } else {
 
@@ -286,7 +305,7 @@ class CompletePurchaseActivity : ComponentActivity() {
                                     // (Esto sobrescribe el proveedor de la boleta si es diferente, lo cual es correcto)
                                     proveedorId = productoExistente.idProveedor
                                     listaProveedores.find { it.ruc == productoExistente.idProveedor }?.let {
-                                        proveedorNombre = it.nombre
+                                        proveedorNombre = it.razonSocial
                                     }
                                 }
 
@@ -658,9 +677,9 @@ class CompletePurchaseActivity : ComponentActivity() {
                                         options = listaProveedores,
                                         selectedValue = proveedorNombre,
                                         onValueChange = { p ->
-                                            proveedorId = p.ruc; proveedorNombre = p.nombre
+                                            proveedorId = p.ruc; proveedorNombre = p.razonSocial
                                         },
-                                        optionToString = { it.nombre },
+                                        optionToString = { it.razonSocial },
                                         color = Color.Yellow,
                                         colorFlecha = VerdeLimon
                                     )
@@ -763,7 +782,7 @@ class CompletePurchaseActivity : ComponentActivity() {
                                                 TextFieldChevere2(
                                                     value = stockActual,
                                                     onValueChange = { stockActual = it },
-                                                    label = "Stock Actual:",
+                                                    label = "Stock a Añadir:",
                                                     imeAction = ImeAction.Next,
                                                     placeholder = "",
                                                     color = Color.White

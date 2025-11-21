@@ -14,6 +14,7 @@ object RetrofitClient {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
+
     val productoService: ProductoService by lazy {
         instance.create(ProductoService::class.java)
     }
@@ -33,5 +34,9 @@ object RetrofitClient {
 
     val perdidaService: PerdidaService by lazy {
         instance.create(PerdidaService::class.java)
+    }
+
+    val clienteService: ClienteService by lazy {
+        instance.create(ClienteService::class.java)
     }
 }

@@ -19,4 +19,6 @@
     <string name="title_activity_purcharse_detail">PurcharseDetailActivity</string>
     <string name="title_activity_alert">AlertActivity</string>
     <string name="title_activity_inventory_losses">InventoryLossesActivity</string>
+    <string name="title_activity_payment_slip_main">PaymentSlipMainActivity</string>
+    <string name="title_activity_sale_return">SaleReturnActivity</string>
 </resources>

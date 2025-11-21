@@ -124,12 +124,6 @@ class InventoryActivity : ComponentActivity() {
                 val keyboardController = LocalSoftwareKeyboardController.current
                 val context = LocalContext.current
                 val message = viewModel.userMessage
-                LaunchedEffect(message) {
-                    if (message != null) {
-                        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-                        viewModel.clearUserMessage() // Limpia el mensaje después de mostrarlo
-                    }
-                }
 
                 var uiState by remember { mutableStateOf<InventoryUiState>(InventoryUiState.Loading) }
                 var searchQuery by remember { mutableStateOf("") }
@@ -171,30 +165,30 @@ class InventoryActivity : ComponentActivity() {
                             )
 
                             uiState = try {
-                                // ¡LLAMADA CORREGIDA! Pasamos los parámetros por separado.
+                                // 1. La llamada a la API devuelve correctamente el objeto 'ProductListResponse'
                                 val response = RetrofitClient.productoService.getProducts(
                                     userId = userId,
-                                    searchTerm = query?.ifBlank { null }, // Envía null si la búsqueda está vacía
+                                    searchTerm = query?.ifBlank { null },
                                     categoryId = categoryId,
                                     estado = status
-
                                 )
 
+                                // 2. Verificamos la bandera 'success' que está DENTRO de la respuesta
                                 if (response.success) {
-                                    InventoryUiState.Success(response.data)
+                                    // 3. ¡Éxito! Le pasamos al estado la lista que está en el campo 'data'
+                                    Log.d("FetchProducts", "API success. Productos recibidos: ${response.data.size}")
+                                    InventoryUiState.Success(response.data) // <-- Aquí está la lista
                                 } else {
-                                    Log.e(
-                                        "InventoryActivity",
-                                        "API devolvió un error: ${response.message}"
-                                    )
+                                    // 4. Si la API devuelve success=false, es un error de lógica del servidor.
+                                    Log.e("InventoryActivity", "La API devolvió un error: ${response.message}")
+                                    viewModel.postMessage(response.message ?: "Error desconocido de la API") // Usamos el ViewModel para mostrar el Toast
                                     InventoryUiState.Error
                                 }
+
                             } catch (e: Exception) {
-                                Log.e(
-                                    "InventoryActivity",
-                                    "Error de red o parsing: ${e.message}",
-                                    e
-                                )
+                                // 5. Esto atrapa errores de red (no hay conexión) o un JSON que NO coincide con 'ProductListResponse'
+                                Log.e("InventoryActivity", "Error de red o parsing: ${e.message}", e)
+                                viewModel.postMessage("Error de conexión. Revisa tu internet.") // Usamos el ViewModel
                                 InventoryUiState.Error
                             }
                         }
@@ -718,7 +712,7 @@ fun InventoryDialogs(
                     colors = CardDefaults.cardColors(containerColor = GrisClaro2),
                     modifier = Modifier.fillMaxWidth() // O un ancho específico con .width(300.dp)
                 ) {
-                    Column {
+                    Column (modifier = Modifier.padding(24.dp)){
                         Row (
                             verticalAlignment = Alignment.CenterVertically
                         ){

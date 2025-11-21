@@ -187,7 +187,7 @@ fun SupplierCard(supplier: Proveedor) {
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = supplier.nombre,
+            text = supplier.razonSocial,
             color = Color.White,
             fontSize = 20.sp,
         )

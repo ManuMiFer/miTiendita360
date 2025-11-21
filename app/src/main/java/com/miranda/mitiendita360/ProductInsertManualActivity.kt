@@ -136,6 +136,15 @@ class WideOvalBottomShape(
         return Outline.Generic(path)
     }
 }
+data class OpenFoodFactsResponse(
+    val code: String,
+    val product: ProductInfo?, // Puede ser nulo si el producto no se encuentra
+    val status: Int
+)
+
+data class ProductInfo(
+    val brands: String? // Puede ser nulo si el producto no tiene marca registrada
+)
 class ProductInsertActivity : ComponentActivity() {
 
     private val retrofit = Retrofit.Builder()
@@ -297,6 +306,27 @@ class ProductInsertActivity : ComponentActivity() {
                     }
                 )
             }
+            LaunchedEffect(codigoBarra) {
+                // Si el código de barras no está vacío (para evitar llamadas al inicio)
+                if (codigoBarra.isNotBlank()) {
+                    val apiUrl = "https://world.openfoodfacts.org/api/v2/product/$codigoBarra.json?fields=brands"
+                    try {
+                        // Lanzamos una corrutina para la llamada de red
+                        val response = productoService.getBrandFromBarcode(apiUrl)
+                        if (response.status == 1 && !response.product?.brands.isNullOrBlank()) {
+                            // Si se encuentra una marca, la asignamos a nuestra variable de estado.
+                            marca = response.product!!.brands!!
+                            Log.d("API_CALL", "Marca encontrada: ${response.product.brands}")
+                        } else {
+                            Log.d("API_CALL", "Producto no encontrado o sin marca.")
+                        }
+                    } catch (e: Exception) {
+                        Log.e("API_CALL", "Error al llamar a OpenFoodFacts API", e)
+                        // Opcional: Mostrar un Toast si falla la conexión
+                        // Toast.makeText(this@ProductInsertActivity, "Error al buscar marca", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
             MiTiendita360Theme {
                 if (mostrarScanner) {
                     // Obtenemos el CameraProvider de forma segura
@@ -413,6 +443,7 @@ class ProductInsertActivity : ComponentActivity() {
                                                imeAction = ImeAction.Next
                                            )
                                        }
+
                                        Column(
                                            modifier = Modifier.weight(1f)
                                        ) {
@@ -450,24 +481,8 @@ class ProductInsertActivity : ComponentActivity() {
                                        }
                                    }
 
-
                                    Spacer(modifier = Modifier.padding(5.dp))
 
-                                   // Dropdown Categoria
-
-                                   DropdownChevere(
-                                       label = "Categoria:",
-                                       options = listaCategorias,
-                                       selectedValue = categoriaNombre,
-                                       onValueChange = { categoriaSeleccionada ->
-                                           categoriaId = categoriaSeleccionada.id
-                                           categoriaNombre = categoriaSeleccionada.tipo
-                                       },
-                                       optionToString = { it.tipo }
-                                   )
-
-
-                                   Spacer(modifier = Modifier.padding(5.dp))
 
                                    DropdownChevere(
                                        label = "Proveedor:",
@@ -475,131 +490,12 @@ class ProductInsertActivity : ComponentActivity() {
                                        selectedValue = proveedorNombre,
                                        onValueChange = { proveedorSeleccionado ->
                                            proveedorId = proveedorSeleccionado.ruc
-                                           proveedorNombre = proveedorSeleccionado.nombre
+                                           proveedorNombre = proveedorSeleccionado.razonSocial
                                        },
-                                       optionToString = { it.nombre }
+                                       optionToString = { it.razonSocial }
                                    )
-
                                    Spacer(modifier = Modifier.padding(5.dp))
-
-                                   // TextField Marca
-
-                                   TextFieldChevere(
-                                       value = marca,
-                                       onValueChange = { marca = it },
-                                       label = "Marca:",
-                                       placeholder = "",
-                                       imeAction = ImeAction.Next
-
-                                   )
-
-
-                                   Spacer(modifier = Modifier.padding(5.dp))
-
-                                   // TextField Precio Compra/Venta
-
-                                   Row(
-                                       modifier = Modifier.fillMaxWidth(),
-                                       horizontalArrangement = Arrangement.spacedBy(16.dp)
-                                   ) {
-                                       val pCompra = precioCompra.toDoubleOrNull()
-                                       val pVenta = precioVenta.toDoubleOrNull()
-                                       Column(modifier = Modifier.weight(1f)) { // Envuelve en una Column con weight
-                                           TextFieldChevere2(
-                                               value = precioCompra,
-                                               onValueChange = { precioCompra = it },
-                                               label = "Precio de Compra:",
-                                               placeholder = "S/0.00",
-                                               imeAction = ImeAction.Next,
-                                               enabled = true,
-                                               color = Color.White,
-                                               keyboarType = KeyboardType.Decimal
-                                           )
-                                       }
-
-                                       Column(modifier = Modifier.weight(1f)) { // Envuelve en una Column con weight
-                                           TextFieldChevere2(
-                                               value = precioVenta, // Usa la variable de estado correcta
-                                               onValueChange = {
-                                                   precioVenta = it
-                                               }, // Usa el onValueChange correcto
-                                               label = "Precio de Venta:",
-                                               placeholder = "S/0.00",
-                                               imeAction = ImeAction.Next,
-                                               enabled = true,
-                                               color = if (pCompra == null || pVenta == null) {
-                                                   Color.White
-                                               } else {
-                                                   // 3. Ahora sí, compara los números. El color será Rojo si la venta es menor que la compra.
-                                                   if (pVenta > pCompra) Color.White else Color.Red
-                                               },
-                                               keyboarType = KeyboardType.Decimal
-                                           )
-                                       }
-                                   }
-
-
-                                   Spacer(modifier = Modifier.padding(5.dp))
-
-                                   // TextField Fecha de Vencimiento
-
-                                   DatePickerField(
-                                       label = "Fecha de Vencimiento:",
-                                       selectedDate = FechaVencimiento,
-                                       onDateSelected = { FechaVencimiento = it }
-                                   )
-
-
-                                   Spacer(modifier = Modifier.padding(5.dp))
-
-                                   // TextField Stock Actual/Minimo
-
-                                   Row(
-                                       modifier = Modifier.fillMaxWidth(),
-                                       horizontalArrangement = Arrangement.spacedBy(16.dp)
-                                   ) {
-                                       val sActual = stockActual.toDoubleOrNull()
-                                       val sMinimo = stockMinimo.toDoubleOrNull()
-                                       // Campo de texto para el Precio
-                                       Column(modifier = Modifier.weight(1f)) { // Envuelve en una Column con weight
-                                           TextFieldChevere2(
-                                               value = stockActual,
-                                               onValueChange = { stockActual = it },
-                                               label = "Stock Actual:",
-                                               placeholder = "",
-                                               imeAction = ImeAction.Next,
-                                               enabled = true,
-                                               color = Color.White,
-                                               keyboarType = KeyboardType.Decimal
-                                           )
-                                       }
-                                       // Campo de texto para el Stock Actual
-                                       Column(modifier = Modifier.weight(1f)) { // Envuelve en una Column con weight
-                                           TextFieldChevere2(
-                                               value = stockMinimo, // Usa la variable de estado correcta
-                                               onValueChange = {
-                                                   stockMinimo = it
-                                               }, // Usa el onValueChange correcto
-                                               label = "Stock Minimo:",
-                                               placeholder = " ",
-                                               imeAction = ImeAction.Next,
-                                               enabled = true,
-                                               color = if (sActual == null || sMinimo == null) {
-                                                   Color.White
-                                               } else {
-                                                   // 3. Ahora sí, compara los números. El color será Rojo si la venta es menor que la compra.
-                                                   if (sActual > sMinimo) Color.White else Color.Red
-                                               },
-                                               keyboarType = KeyboardType.Decimal
-                                           )
-                                       }
-                                   }
-
-
-                                   Spacer(modifier = Modifier.padding(5.dp))
-
                                    // TextField Codigo de Barras
-
                                    Row(
                                        modifier = Modifier.fillMaxWidth(),
                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -642,6 +538,133 @@ class ProductInsertActivity : ComponentActivity() {
                                                        }
                                                )
                                            }
+                                       }
+                                   }
+
+                                   Spacer(modifier = Modifier.padding(5.dp))
+
+                                   // Dropdown Categoria
+
+                                   DropdownChevere(
+                                       label = "Categoria:",
+                                       options = listaCategorias,
+                                       selectedValue = categoriaNombre,
+                                       onValueChange = { categoriaSeleccionada ->
+                                           categoriaId = categoriaSeleccionada.id
+                                           categoriaNombre = categoriaSeleccionada.tipo
+                                       },
+                                       optionToString = { it.tipo }
+                                   )
+
+
+                                   Spacer(modifier = Modifier.padding(5.dp))
+
+                                   // TextField Marca
+
+                                   TextFieldChevere(
+                                       value = marca,
+                                       onValueChange = { marca = it },
+                                       label = "Marca:",
+                                       placeholder = "",
+                                       imeAction = ImeAction.Next
+
+                                   )
+
+
+                                   Spacer(modifier = Modifier.padding(5.dp))
+
+                                   // TextField Fecha de Vencimiento
+
+                                   DatePickerField(
+                                       label = "Fecha de Vencimiento:",
+                                       selectedDate = FechaVencimiento,
+                                       onDateSelected = { FechaVencimiento = it }
+                                   )
+
+
+                                   Spacer(modifier = Modifier.padding(5.dp))
+
+                                   // TextField Stock Actual/Minimo
+
+                                   Row(
+                                       modifier = Modifier.fillMaxWidth(),
+                                       horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                   ) {
+                                       val sActual = stockActual.toDoubleOrNull()
+                                       val sMinimo = stockMinimo.toDoubleOrNull()
+                                       // Campo de texto para el Precio
+                                       Column(modifier = Modifier.weight(1f)) { // Envuelve en una Column con weight
+                                           TextFieldChevere2(
+                                               value = stockActual,
+                                               onValueChange = { stockActual = it },
+                                               label = "Stock a Añadir:",
+                                               placeholder = "",
+                                               imeAction = ImeAction.Next,
+                                               enabled = true,
+                                               color = Color.White,
+                                               keyboarType = KeyboardType.Decimal
+                                           )
+                                       }
+                                       // Campo de texto para el Stock Actual
+                                       Column(modifier = Modifier.weight(1f)) { // Envuelve en una Column con weight
+                                           TextFieldChevere2(
+                                               value = stockMinimo, // Usa la variable de estado correcta
+                                               onValueChange = {
+                                                   stockMinimo = it
+                                               }, // Usa el onValueChange correcto
+                                               label = "Stock Minimo:",
+                                               placeholder = " ",
+                                               imeAction = ImeAction.Next,
+                                               enabled = true,
+                                               color = if (sActual == null || sMinimo == null) {
+                                                   Color.White
+                                               } else {
+                                                   // 3. Ahora sí, compara los números. El color será Rojo si la venta es menor que la compra.
+                                                   if (sActual > sMinimo) Color.White else Color.Red
+                                               },
+                                               keyboarType = KeyboardType.Decimal
+                                           )
+                                       }
+                                   }
+                                   Spacer(modifier = Modifier.padding(5.dp))
+
+                                   Row(
+                                       modifier = Modifier.fillMaxWidth(),
+                                       horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                   ) {
+                                       val pCompra = precioCompra.toDoubleOrNull()
+                                       val pVenta = precioVenta.toDoubleOrNull()
+                                       Column(modifier = Modifier.weight(1f)) { // Envuelve en una Column con weight
+                                           TextFieldChevere2(
+                                               value = precioCompra,
+                                               onValueChange = { precioCompra = it },
+                                               label = "Precio de Compra:",
+                                               placeholder = "S/0.00",
+                                               imeAction = ImeAction.Next,
+                                               enabled = true,
+                                               color = Color.White,
+                                               keyboarType = KeyboardType.Decimal
+                                           )
+                                       }
+
+                                       Column(modifier = Modifier.weight(1f)) { // Envuelve en una Column con weight
+                                           TextFieldChevere2(
+                                               value = precioVenta, // Usa la variable de estado correcta
+                                               onValueChange = {
+                                                   precioVenta = it
+                                               }, // Usa el onValueChange correcto
+                                               label = "Precio de Venta:",
+                                               placeholder = "S/0.00",
+                                               imeAction = ImeAction.Next,
+                                               enabled = true,
+                                               color = if (pCompra == null || pVenta == null) {
+                                                   Color.White
+                                               } else {
+                                                   // 3. Ahora sí, compara los números. El color será Rojo si la venta es menor que la compra.
+                                                   if (pVenta > pCompra) Color.White else Color.Red
+                                               },
+                                               keyboarType = KeyboardType.Decimal
+                                           )
                                        }
                                    }
 
@@ -747,14 +770,6 @@ class ProductInsertActivity : ComponentActivity() {
                                             }
                                         }
                                     )
-                                    Spacer(modifier = Modifier.padding(5.dp))
-                                    BotonChevere(
-                                        texto = "Otro Producto",
-                                        colorFondo = xd,
-                                        colorTexto = Color.White
-                                    ) {
-
-                                    }
                                 }
                             }
                         }

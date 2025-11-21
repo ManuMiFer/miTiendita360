@@ -61,6 +61,7 @@ sealed interface ProductDetailUiState {
     data class Error(val message: String) : ProductDetailUiState
 }
 class ProductDetailActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val productId = intent.getIntExtra("PRODUCT_ID", -1)
@@ -184,7 +185,7 @@ fun ProductDetailContent(product: Producto, onRegresarClick: () -> Unit) {
                 .background(color = Fondo1)
         ) {
             AsyncImage(
-                model = "https://manuelmirandafernandez.com/imagenes/${product.imagen}", // <-- CORREGIDO: Añadido "https://"
+                model = "${BuildConfig.API_BASE_URL}imagenes/${product.imagen}", // <-- CORREGIDO: Añadido "https://"
                 contentDescription = "Imagen de ${product.nombre}", // <-- MEJORADO: Descripción más útil
                 placeholder = painterResource(id = R.drawable.box), // <-- BUENA PRÁCTICA: Muestra algo mientras carga
                 error = painterResource(id = R.drawable.box),
@@ -231,13 +232,16 @@ fun ProductDetailContent(product: Producto, onRegresarClick: () -> Unit) {
                         DetailItem(label = "Estado:", value = if (product.estado == 1) "Activo" else "Inactivo")
                     }
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.weight(1f))
                     BotonChevere(
                         texto = "Regresar",
                         colorFondo = GrisClaro,
                         colorTexto = Color.White,
                         onClick = onRegresarClick
                     )
+                    Spacer(
+                        modifier = Modifier
+                            .height(20.dp))
                 }
             }
         }

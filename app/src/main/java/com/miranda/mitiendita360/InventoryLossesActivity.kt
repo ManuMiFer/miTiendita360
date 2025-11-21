@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -36,7 +37,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIos
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Upload
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -50,6 +56,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
@@ -60,8 +67,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.lifecycleScope
 import coil.compose.AsyncImage
 import com.google.firebase.auth.FirebaseAuth
@@ -77,11 +87,17 @@ import com.miranda.mitiendita360.ui.components.DatePickerField2
 import com.miranda.mitiendita360.ui.components.DropdownChevere2
 import com.miranda.mitiendita360.ui.components.TextAreaChevere
 import com.miranda.mitiendita360.ui.components.TextFieldChevere2
+import com.miranda.mitiendita360.ui.theme.Celestito
 import com.miranda.mitiendita360.ui.theme.Fondo1
 import com.miranda.mitiendita360.ui.theme.GrisClaro
+import com.miranda.mitiendita360.ui.theme.GrisClaro2
 import com.miranda.mitiendita360.ui.theme.MiTiendita360Theme
+import com.miranda.mitiendita360.ui.theme.Naranjita
 import com.miranda.mitiendita360.ui.theme.Rojo
+import com.miranda.mitiendita360.ui.theme.Verde
 import com.miranda.mitiendita360.ui.theme.VerdeLimon
+import com.miranda.mitiendita360.ui.theme.Verdecito
+import com.miranda.mitiendita360.ui.theme.xd
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -104,6 +120,9 @@ class InventoryLossesActivity : ComponentActivity() {
             var cantidadPerdida by remember { mutableIntStateOf(1) }
             var stockDisponible by remember { mutableIntStateOf(0) }
             var fecha by remember { mutableStateOf("") }
+
+            var perdidaSeleccionada by remember { mutableStateOf<PerdidaHistorial?>(null) }
+
 
             // --- NUEVOS ESTADOS PARA EL FORMULARIO ---
             val razones = listOf("Vencimiento", "Deterioro", "Robo", "Otro")
@@ -466,78 +485,170 @@ class InventoryLossesActivity : ComponentActivity() {
                                 )
                             }
                         } else {
-                            items(historialPerdidas) { perdida ->
-                                PerdidaCard(perdida = perdida)
+                            items(historialPerdidas, key = { it.id }) { perdida ->
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(13.dp))
+                                        .background(GrisClaro)
+                                        .padding(10.dp)
+                                        .clickable(
+                                            onClick = {
+                                                perdidaSeleccionada = perdida
+                                            }
+                                        ),
+                                ) {
+                                    // Indicador de color (si quieres)
+                                    Column(
+                                        Modifier
+                                            .height(56.dp)
+                                            .width(10.dp)
+                                            .clip(RoundedCornerShape(13.dp))
+                                            .background(color = Rojo)
+                                    ) {}
+                                    AsyncImage(
+                                        model = "${BuildConfig.API_BASE_URL}imagenes/${perdida.ruta_imagen}",
+                                        contentDescription = "Imagen de la pérdida",
+                                        modifier = Modifier
+                                            .size(50.dp)
+                                            .clip(RoundedCornerShape(13.dp)),
+                                        contentScale = ContentScale.Crop
+                                    )
+
+                                    // Columna con Nombre y Razón
+                                    Column(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .padding(horizontal = 8.dp)
+                                    ) {
+                                        Text(
+                                            text = perdida.nombre_producto,
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 18.sp,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis // Para nombres largos
+                                        )
+                                        Text(
+                                            text = "Razón: ${perdida.razon}",
+                                            color = Color.White,
+                                            fontSize = 15.sp
+                                        )
+                                    }
+
+                                    // Columna con Cantidad y Fecha
+                                    Column(horizontalAlignment = Alignment.End) {
+                                        Text(
+                                            text = "${perdida.cantidad} Unidades",
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 18.sp
+                                        )
+                                        Text(
+                                            text = perdida.fecha, // La fecha ya viene formateada desde la BD
+                                            color = Color.White,
+                                            fontSize = 15.sp
+                                        )
+                                    }
+                                }
                                 Spacer(modifier = Modifier.height(8.dp))
+                            }
+                        }
+                    }
+                    if (perdidaSeleccionada != null) {
+                        perdidaSeleccionada?.let{ perdida ->
+                            Dialog(
+                                onDismissRequest = { perdidaSeleccionada = null },
+                                properties = DialogProperties(usePlatformDefaultWidth = false)
+                            ) {
+                                Box (
+                                    modifier = Modifier
+                                        .width(360.dp)
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .height(350.dp)
+                                ) {
+                                    Column (
+                                        modifier = Modifier.fillMaxWidth()
+                                    ){
+                                        AsyncImage(
+                                            model = "${BuildConfig.API_BASE_URL}imagenes/${perdida.ruta_imagen}",
+                                            contentDescription = "Imagen de la pérdida",
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .size(220.dp)
+                                        )
+
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .background(Fondo1)
+                                                .padding(horizontal = 10.dp)
+                                                .weight(1f)
+                                        ) {
+                                            Spacer(modifier = Modifier.padding(19.dp))
+                                            Text(
+                                                text = perdida.nombre_producto,
+                                                color = Color.White,
+                                                fontSize = 20.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                            Text(
+                                                text = perdida.detalles.toString(),
+                                                color = xd,
+                                                fontSize = 15.sp
+                                            )
+                                        }
+                                    }
+                                    Column (
+                                        Modifier.fillMaxSize(),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+
+                                    ){
+                                        Spacer(
+                                            modifier = Modifier.padding(95.dp))
+                                        Image(
+                                            painterResource(when(perdida.razon){
+                                                "vencimiento" -> R.drawable.vencimiento
+                                                "deterioro" -> R.drawable.deterioro
+                                                "robo" -> R.drawable.robo
+                                                "daño" -> R.drawable.dano
+                                                "otro" -> R.drawable.box
+                                                else -> R.drawable.box
+                                            }),
+                                            contentDescription = "",
+                                            colorFilter = ColorFilter.tint(color = Color.White),
+                                            contentScale = ContentScale.Fit,
+                                            modifier = Modifier
+                                                .clip(shape = CircleShape)
+                                                .background(Fondo1)
+                                                .padding(10.dp)
+                                                .size(50.dp)
+                                        )
+                                    }
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Cerrar",
+                                        tint = Color.White,
+                                        modifier = Modifier
+                                            .size(25.dp)
+                                            .padding(top = 8.dp, end = 8.dp)
+                                            .align(Alignment.TopEnd)
+                                            .clickable(
+                                                onClick = {
+                                                    perdidaSeleccionada = null
+                                                }
+                                            )
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
-        }
-    }
-}
-@Composable
-fun PerdidaCard(perdida: PerdidaHistorial) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(13.dp))
-            .background(GrisClaro)
-            .padding(10.dp),
-    ) {
-        // Indicador de color (si quieres)
-        Column(
-            Modifier
-                .height(56.dp)
-                .width(10.dp)
-                .clip(RoundedCornerShape(13.dp))
-                .background(color = Rojo)
-        ) {}
-        AsyncImage(
-            model = "${BuildConfig.API_BASE_URL}imagenes/${perdida.ruta_imagen}",
-            contentDescription = "Imagen de la pérdida",
-            modifier = Modifier.size(50.dp)
-                .clip(RoundedCornerShape(13.dp)),
-            contentScale = ContentScale.Crop
-        )
-
-        // Columna con Nombre y Razón
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 8.dp)
-        ) {
-            Text(
-                text = perdida.nombre_producto,
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis // Para nombres largos
-            )
-            Text(
-                text = "Razón: ${perdida.razon}",
-                color = Color.White,
-                fontSize = 15.sp
-            )
-        }
-
-        // Columna con Cantidad y Fecha
-        Column(horizontalAlignment = Alignment.End) {
-            Text(
-                text = "${perdida.cantidad} Unidades",
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp
-            )
-            Text(
-                text = perdida.fecha, // La fecha ya viene formateada desde la BD
-                color = Color.White,
-                fontSize = 15.sp
-            )
         }
     }
 }

@@ -2,10 +2,14 @@ package com.miranda.mitiendita360.network
 
 import com.google.gson.annotations.SerializedName
 import com.miranda.mitiendita360.models.Proveedor
+import com.miranda.mitiendita360.models.SunatResponse
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Query
+import retrofit2.http.Url
 
 
 interface ProveedorService {
@@ -17,20 +21,23 @@ interface ProveedorService {
         @Query("idUsuario") idUsuario: String,
         @Query("searchTerm") searchTerm: String?
     ): ProveedorListResponse
+
+    @GET
+    suspend fun getSunatInfo(
+        @Url url: String, // Usamos @Url para pasar la URL completa
+        @Header("Authorization") apiKey: String
+    ): SunatResponse
+
 }
 
 data class SimpleApiResponse(
     val success: Boolean,
     val message: String
 )
-data class Proveedor(
-    // Los nombres deben coincidir con las claves del JSON que devuelve tu PHP
-    @SerializedName("ruc") val ruc: String,
-    @SerializedName("nombre") val nombre: String
-)
 
 data class ProveedorListResponse(
-    @SerializedName("success") val success: Boolean,
-    @SerializedName("message") val message: String,
-    @SerializedName("data") val data: List<Proveedor>?
+    val success: Boolean,
+    val message: String,
+    val data: List<Proveedor>?
 )
+

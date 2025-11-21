@@ -14,15 +14,14 @@ data class Venta(
 )
 
     data class DetalleVentaRequest(
-    val idProducto: Int,
-    val precioVenta: Double,
-    val cantidad: Int,
-    val subtotal: Double
+        val idProducto: Int?,
+        val precioVenta: Double,
+        val cantidad: Int,
+        val subtotal: Double
 )
 
-// Representa la información del pago
-data class PagoRequest(
-    val metodoPago: String, // ej: "Efectivo", "Tarjeta"
+data class PagoInfo(
+    val metodoPago: String,
     val monto: Double
 )
 
@@ -33,7 +32,7 @@ data class VentaRequest(
     val idCliente: String?,
     val fechaHora: String,
     val detalles: List<DetalleVentaRequest>,
-    val pagos: List<PagoRequest>
+    val pagos: List<PagoInfo>
 )
 
 data class VentasResponse(

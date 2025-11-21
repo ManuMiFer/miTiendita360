@@ -32,11 +32,10 @@ interface CompraService {
         @Part("nombre_archivo") nombreArchivo: RequestBody
     ): GenericResponse
 
-    // CORRECCIÓN 2: Tu script PHP de actualización espera 'nombreImagen', no un mapa genérico.
-    // Además, tu script de ejemplo usa POST, no PUT. Lo ajustamos.
+
     @POST("actualizar_ruta_imagen.php") // Basado en el nombre de tu archivo en el servicio de producto
     suspend fun actualizarUrlImagen(
-        @Body body: Map<String, String> // Enviaremos {"idProducto": "123", "nombreImagen": "nombre.jpg"}
+        @Body body: Map<String, String>
     ): GenericResponse
 
     @GET("obtenerDetalleCompras.php")

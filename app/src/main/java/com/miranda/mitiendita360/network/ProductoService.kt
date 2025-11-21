@@ -1,9 +1,12 @@
 package com.miranda.mitiendita360.network
 
+import com.miranda.mitiendita360.OpenFoodFactsResponse
 import com.miranda.mitiendita360.SaleDetailResponse
+import com.miranda.mitiendita360.SaleReturnActivity
 import com.miranda.mitiendita360.models.DeleteProductRequest
 import com.miranda.mitiendita360.models.GenericResponse
 import com.miranda.mitiendita360.models.ImageUpdateRequest
+import com.miranda.mitiendita360.models.PagoInfo
 import com.miranda.mitiendita360.models.ProductInsertResponse
 import com.miranda.mitiendita360.models.ProductListResponse
 import com.miranda.mitiendita360.models.ProductResponse
@@ -16,11 +19,14 @@ import com.miranda.mitiendita360.models.VentasResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import retrofit2.http.Body
+import retrofit2.http.Field
+import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
 import retrofit2.http.Query
+import retrofit2.http.Url
 
 interface ProductoService {
 
@@ -66,6 +72,9 @@ interface ProductoService {
     @POST("insertar_venta.php")
     suspend fun registrarVenta(@Body ventaData: VentaRequest): GenericResponse // Reutilizamos GenericResponse
 
+    @POST("insertar_pago.php")
+    suspend fun registrarPago(@Body pagoData: PagoInfo): GenericResponse
+
 
     @GET("verificar_ventas_producto.php")
     suspend fun checkProductSales(@Query("idProducto") productId: Int): SalesCheckResponse
@@ -77,11 +86,26 @@ interface ProductoService {
         @Query("user_id") userId: String,
         @Query("fecha_inicio") fechaInicio: String? = null,
         @Query("fecha_fin") fechaFin: String? = null,
-        @Query("search_term") searchTerm: String? = null
+        @Query("search_term") searchTerm: String? = null,
+        @Query("estados") estados: String? = null
     ): VentasResponse
     @GET("get_venta_detalle.php")
     suspend fun getVentaDetalle(
         @Query("id_venta") ventaId: Int
     ): SaleDetailResponse
+
+    @FormUrlEncoded
+    @POST("anular_venta.php")
+    suspend fun anularVenta(
+        @Field("id_venta") idVenta: Int
+    ): GenericResponse
+
+    @POST("procesar_devolucion.php")
+    suspend fun procesarDevolucion(
+        @Body datos: SaleReturnActivity.DatosProcesoDevolucion
+    ): GenericResponse
+
+    @GET
+    suspend fun getBrandFromBarcode(@Url url: String): OpenFoodFactsResponse
 }
 

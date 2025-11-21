@@ -24,6 +24,7 @@ class InventoryViewModel : ViewModel() {
         private set
 
     var userMessage by mutableStateOf<String?>(null)
+        private set
 
     var refreshList by mutableStateOf(false)
         private set
@@ -61,11 +62,39 @@ class InventoryViewModel : ViewModel() {
                     userMessage = "Producto '${product.nombre}' eliminado con éxito."
                     refreshList = true
                 } else {
+                    // Esto manejará los errores lógicos donde el servidor responde con success: false pero código 200 OK.
                     userMessage = response.message ?: "Error desconocido al eliminar."
                 }
             } catch (e: Exception) {
+                // --- INICIO DE LA SOLUCIÓN ---
+                // Aquí atrapamos las excepciones de red, incluyendo los códigos de error HTTP.
                 Log.e("InventoryViewModel", "Error al eliminar producto", e)
-                userMessage = "Error de conexión: ${e.message}"
+
+                if (e is retrofit2.HttpException && e.code() == 409) {
+                    // ¡Atrapamos el error 409 (Conflict)!
+                    // Intentamos leer el mensaje que envía el PHP.
+                    val errorBody = e.response()?.errorBody()?.string()
+                    if (!errorBody.isNullOrEmpty()) {
+                        try {
+                            // Usamos Gson para convertir el JSON de error en nuestro objeto GenericResponse
+                            val gson = com.google.gson.Gson()
+                            val errorResponse = gson.fromJson(errorBody, com.miranda.mitiendita360.models.GenericResponse::class.java)
+                            // Mostramos el mensaje amigable que viene del servidor.
+                            // Ejemplo: "No se puede eliminar: El producto aún tiene X unidades en stock."
+                            userMessage = errorResponse.message
+                        } catch (jsonError: Exception) {
+                            // Si falla el parseo del JSON, mostramos un mensaje genérico pero claro.
+                            userMessage = "No se puede eliminar: el producto tiene stock."
+                        }
+                    } else {
+                        // Si el cuerpo del error está vacío, mostramos el mensaje genérico.
+                        userMessage = "No se puede eliminar: el producto tiene stock."
+                    }
+                } else {
+                    // Para cualquier otro error (sin conexión, error 500, etc.)
+                    userMessage = "Error de conexión o del servidor. Inténtalo más tarde."
+                }
+                // --- FIN DE LA SOLUCIÓN ---
             } finally {
                 hideDialog()
             }
@@ -79,5 +108,9 @@ class InventoryViewModel : ViewModel() {
     }
     fun onRefreshComplete() {
         refreshList = false
+    }
+
+    fun postMessage(message: String) {
+        userMessage = message
     }
 }

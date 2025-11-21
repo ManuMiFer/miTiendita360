@@ -74,6 +74,7 @@ class SearchProductActivity : ComponentActivity() {
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val excludedIds = intent.getStringArrayListExtra("EXCLUDED_IDS") ?: arrayListOf()
         enableEdgeToEdge()
         setContent {
             MiTiendita360Theme {
@@ -194,7 +195,9 @@ class SearchProductActivity : ComponentActivity() {
                             fontSize = 25.sp
                         )
                         Spacer(modifier = Modifier.height(10.dp))
-                        val productosDisponibles = allProducts.filter { it.stockActual > 0 }
+                        val productosDisponibles = allProducts.filter { producto ->
+                            producto.stockActual > 0 && !excludedIds.contains(producto.id .toString())
+                        }
                         LazyColumn(
                             modifier = Modifier.weight(1f), // <-- AÑADE ESTO para que ocupe el espacio disponible
                             verticalArrangement = Arrangement.spacedBy(10.dp)

@@ -262,7 +262,7 @@ class ProductUpdateActivity : ComponentActivity() {
 
                             // Buscar los nombres para mostrarlos en los dropdowns
                             categoriaNombre = listaCategorias.find { it.id == categoriaId }?.tipo?: "Selecciona una categoría"
-                            proveedorNombre = listaProveedores.find { it.ruc == proveedorId }?.nombre ?: "Selecciona un Proveedor"
+                            proveedorNombre = listaProveedores.find { it.ruc == proveedorId }?.razonSocial ?: "Selecciona un Proveedor"
 
                             // Cambiamos el estado a Success para mostrar la UI
                             uiState = ProductUpdateUiState.Success(product)
@@ -503,21 +503,6 @@ class ProductUpdateActivity : ComponentActivity() {
                                        },
                                        optionToString = { it.tipo }
                                    )
-
-
-                                   Spacer(modifier = Modifier.padding(5.dp))
-
-                                   DropdownChevere(
-                                       label = "Proveedor:",
-                                       options = listaProveedores,
-                                       selectedValue = proveedorNombre,
-                                       onValueChange = { proveedorSeleccionado ->
-                                           proveedorId = proveedorSeleccionado.ruc
-                                           proveedorNombre = proveedorSeleccionado.nombre
-                                       },
-                                       optionToString = { it.nombre }
-                                   )
-
                                    Spacer(modifier = Modifier.padding(5.dp))
 
                                    // TextField Marca

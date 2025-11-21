@@ -118,7 +118,7 @@ class MenuActivity : ComponentActivity() {
              val accionesRapidas = listOf(
                 AccionRapidaItem("Nuevo Producto", R.drawable.add, ProductInsertActivity::class), // Reemplaza con tus drawables reales
                 AccionRapidaItem("Inventario", R.drawable.box, InventoryActivity::class),
-                AccionRapidaItem("Nueva Venta", R.drawable.cashregister, SaleInsertActivity::class),
+                AccionRapidaItem("Nueva Venta", R.drawable.cashregister, SaleActivity::class),
                 AccionRapidaItem("Historial Ventas", R.drawable.check, SaleHistoryActivity::class),
                 AccionRapidaItem("Proveedor", R.drawable.supplier, SupplierInsertActivity::class), // Reemplaza con tus drawables reales
                 AccionRapidaItem("Mis Proveedores", R.drawable.suppliers, SupplierActivity::class),

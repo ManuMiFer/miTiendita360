@@ -1,23 +1,12 @@
 package com.miranda.mitiendita360
 
-import BarcodeAnalyzer
-import ScannerView
-import android.app.Activity
-import android.app.AlertDialog
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.launch
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -26,182 +15,207 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.add
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBackIos
-import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.ContentDataType
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.LinearGradient
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.dismiss
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.FinishComposingTextCommand
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.viewmodel.compose.viewModel
+
 import coil.compose.AsyncImage
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
 import com.google.firebase.auth.FirebaseAuth
-import com.miranda.mitiendita360.models.DetalleVentaRequest
-import com.miranda.mitiendita360.models.PagoRequest
-import com.miranda.mitiendita360.models.Producto
-import com.miranda.mitiendita360.models.VentaRequest
+import com.miranda.mitiendita360.models.Cliente
+import com.miranda.mitiendita360.models.ClienteRequest
+import com.miranda.mitiendita360.network.ReniecApiService
 import com.miranda.mitiendita360.network.RetrofitClient
-import com.miranda.mitiendita360.ui.components.ActionButton
 import com.miranda.mitiendita360.ui.components.BotonChevere
-import com.miranda.mitiendita360.ui.theme.Celeste
+import com.miranda.mitiendita360.ui.components.DropdownChevereBasico
+import com.miranda.mitiendita360.ui.components.SearchTextField2
+import com.miranda.mitiendita360.ui.components.SearchableDropdown
+import com.miranda.mitiendita360.ui.components.TextAreaChevere
+import com.miranda.mitiendita360.ui.components.TextFieldChevere
+import com.miranda.mitiendita360.ui.components.TextFieldChevereBasico
 import com.miranda.mitiendita360.ui.theme.Fondo1
 import com.miranda.mitiendita360.ui.theme.GrisClaro
+import com.miranda.mitiendita360.ui.theme.GrisClaro2
+import com.miranda.mitiendita360.ui.theme.Lila
 import com.miranda.mitiendita360.ui.theme.MiTiendita360Theme
 import com.miranda.mitiendita360.ui.theme.Rojito
+import com.miranda.mitiendita360.ui.theme.Verde
 import com.miranda.mitiendita360.ui.theme.VerdeLimon
-import kotlinx.coroutines.CoroutineScope
+import com.miranda.mitiendita360.ui.theme.Verdecito
 import kotlinx.coroutines.launch
-import retrofit2.HttpException
-import java.util.concurrent.Executors
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import java.io.Serializable
+import java.text.SimpleDateFormat
+import kotlin.text.format
+import kotlin.text.map
+import kotlin.text.sumOf
 
-data class CartItem(
-    val producto: Producto,
-    var quantity: Int
-)
+data class BoletaItem(
+    val cantidad: Int,
+    val descripcion: String,
+    val precioUnitario: Double,
+    val subtotal: Double
+) : Serializable
 class SaleInsertActivity : ComponentActivity() {
-    @OptIn(ExperimentalPermissionsApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val cartItems = intent.getParcelableArrayListExtra<CartItem>("CART_ITEMS") ?: arrayListOf()
+        val totalVenta = intent.getDoubleExtra("TOTAL_VENTA", 0.0)
+
+        // 2. Verificación (opcional pero recomendada)
+        if (cartItems.isEmpty()) {
+            Toast.makeText(this, "Error: No se recibieron productos.", Toast.LENGTH_LONG).show()
+            finish()
+            return
+        }
         setContent {
-
-            var productosEnVenta = remember { mutableStateListOf<CartItem>() }
-            val context = LocalContext.current
             val scope = rememberCoroutineScope()
+            val context = LocalContext.current
 
-            // --- 1. ESTADOS PRINCIPALES ---
-            // --- 1. ESTADOS PRINCIPALES ---
-            var showScanner by remember { mutableStateOf(false) }
+            val saleViewModel: SaleViewModel = viewModel()
+            val saleResult by saleViewModel.saleResult.collectAsState()
+            var selectedCliente by remember { mutableStateOf<Cliente?>(null) }
 
+            val clienteViewModel: ClienteViewModel = viewModel()
 
-            val searchProductLauncher = rememberLauncherForActivityResult(
-                contract = ActivityResultContracts.StartActivityForResult()
-            ) { result ->
-                if (result.resultCode == Activity.RESULT_OK) {
-                    // Usamos getParcelableArrayListExtra para recibir la lista
-                    val selectedProducts = result.data?.getParcelableArrayListExtra<Producto>("SELECTED_PRODUCTS")
+            LaunchedEffect(saleResult) {
+                when (val result = saleResult) {
+                    is SaleResult.Success -> {
+                        Toast.makeText(context, result.message, Toast.LENGTH_LONG).show()
+                        saleViewModel.resetResult() // Limpia el estado para futuras operaciones
+                        // Cierra la actividad y vuelve a la pantalla anterior
 
-                    if (!selectedProducts.isNullOrEmpty()) {
-                        // --- LÓGICA SÚPER SIMPLIFICADA ---
-                        selectedProducts.forEach { producto ->
-                            // Reutilizamos la lógica de añadir al carrito que ya tienes
-                            val existingItemIndex = productosEnVenta.indexOfFirst { it.producto.id == producto.id }
-                            if (existingItemIndex != -1) {
-                                // Si ya existe, incrementa la cantidad
-                                val currentItem = productosEnVenta[existingItemIndex]
-                                productosEnVenta[existingItemIndex] = currentItem.copy(quantity = currentItem.quantity + 1)
-                            } else {
-                                // Si es nuevo, añádelo
-                                productosEnVenta.add(CartItem(producto = producto, quantity = 1))
-                            }
+                        val itemsParaBoleta = cartItems.map { cartItem ->
+                            BoletaItem(
+                                cantidad = cartItem.quantity,
+                                descripcion = cartItem.producto.nombre, // <-- Ahora sí podemos usarlo
+                                precioUnitario = cartItem.producto.precioVenta,
+                                subtotal = cartItem.quantity * cartItem.producto.precioVenta
+                            )
                         }
-                        Toast.makeText(context, "${selectedProducts.size} producto(s) añadido(s).", Toast.LENGTH_SHORT).show()
+                        val totalFinal = cartItems.sumOf { it.quantity * it.producto.precioVenta }
+                        val fechaActual = SimpleDateFormat("dd-MM-yyyy", java.util.Locale.getDefault()).format(java.util.Date())
+
+                        val intent = Intent(context, PaymentSlipMainActivity::class.java).apply {
+                            putExtra("CLIENTE_NOMBRE", selectedCliente?.nombre ?: "Cliente Varios")
+                            putExtra("FECHA_VENTA", fechaActual)
+                            putExtra("ITEMS_VENTA", ArrayList(itemsParaBoleta))
+                            putExtra("TOTAL_VENTA", totalFinal)
+                        }
+                        context.startActivity(intent)
+                        (context as? android.app.Activity)?.finish()
+                    }
+                    is SaleResult.Error -> {
+                        Toast.makeText(context, "Error: ${result.message}", Toast.LENGTH_LONG).show()
+                        saleViewModel.resetResult() // Limpia el estado para poder reintentar
+                    }
+                    is SaleResult.Loading -> {
+                        Toast.makeText(context, "Registrando venta...", Toast.LENGTH_SHORT).show()
+                    }
+                    SaleResult.Idle -> { }
+                }
+            }
+            // 2. Recoge los datos del ViewModel como estados
+            val clientes by clienteViewModel.clientes
+            val isLoading by clienteViewModel.isLoading
+            val error by clienteViewModel.error
+
+            // 3. Estados para el dropdown
+            var searchQuery by remember { mutableStateOf("") }
+
+            // Estado para el TEXTO que se MUESTRA en el campo
+            var textoDelCampo by remember { mutableStateOf("") }
+
+
+
+            // La lista se filtra usando el 'searchQuery'
+            val clientesFiltrados = remember(searchQuery, clientes) {
+                if (searchQuery.isBlank()) {
+                    clientes
+                } else {
+                    clientes.filter {
+                        val nombreCompleto = "${it.nombre} ${it.apellidop} ${it.apellidom}"
+                        nombreCompleto.contains(searchQuery, ignoreCase = true) ||
+                                it.dni.contains(searchQuery, ignoreCase = true)
+                    }
+                }
+            }
+            var metodoSelecionado by remember { mutableStateOf("Efectivo") }
+            val ListaMetodos = listOf("Efectivo", "Yape","Multiple")
+            var monto by remember { mutableStateOf(totalVenta) }
+            var yape by remember { mutableStateOf("") }
+            var ultimoCampoEditado by remember { mutableStateOf<String?>(null) }
+            var efectivo by remember { mutableStateOf("") }
+            var nuevoCliente by remember { mutableStateOf("") }
+
+            LaunchedEffect(yape, efectivo) {
+                if (metodoSelecionado == "Multiple") {
+                    val yapeDouble = yape.toDoubleOrNull() ?: 0.0
+                    val efectivoDouble = efectivo.toDoubleOrNull() ?: 0.0
+
+                    if (ultimoCampoEditado == "yape") {
+                        if (yapeDouble <= totalVenta) {
+                            val restante = totalVenta - yapeDouble
+                            // Actualizamos 'efectivo' sin disparar un nuevo cambio en 'yape'
+                            efectivo = String.format("%.2f", restante)
+                        }
+                    }
+                    else if (ultimoCampoEditado == "efectivo") {
+                        if (efectivoDouble <= totalVenta) {
+                            val restante = totalVenta - efectivoDouble
+                            yape = String.format("%.2f", restante)
+                        }
                     }
                 }
             }
 
-            // --- 2. COMPONENTES DE LA CÁMARA (INICIALIZADOS UNA SOLA VEZ) ---
-            val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
-            val cameraProvider = remember { cameraProviderFuture.get() }
-            val previewView = remember { PreviewView(context) }
-            val executor = remember { Executors.newSingleThreadExecutor() }
-            val barcodeAnalyzer = remember {
-                BarcodeAnalyzer { barcode ->
-                    showScanner = false
-
-                    if (barcode.isNotBlank()) {
-                        scope.launch {
-                            try {
-                                val userId = FirebaseAuth.getInstance().currentUser?.uid
-                                if (userId == null) {
-                                    Toast.makeText(context, "Error: Usuario no autenticado", Toast.LENGTH_SHORT).show()
-                                    return@launch
-                                }
-
-                                val response = RetrofitClient.productoService.getProductByBarcode(barcode, userId)
-                                if (response.success && response.product != null) {
-                                    // <-- CAMBIO 3: Lógica para añadir/actualizar en el carrito
-                                    val existingItemIndex = productosEnVenta.indexOfFirst { it.producto.id == response.product.id }
-                                    if (existingItemIndex != -1) {
-                                        // Si el producto ya existe, actualiza su cantidad
-                                        val currentItem = productosEnVenta[existingItemIndex]
-                                        productosEnVenta[existingItemIndex] = currentItem.copy(quantity = currentItem.quantity + 1)
-                                    } else {
-                                        // Si es nuevo, añádelo con cantidad 1
-                                        productosEnVenta.add(CartItem(producto = response.product, quantity = 1))
-                                    }
-                                    Toast.makeText(context, "${response.product.nombre} añadido", Toast.LENGTH_SHORT).show()
-                                } else {
-                                    Toast.makeText(context, response.message ?: "Producto no encontrado", Toast.LENGTH_SHORT).show()
-                                }
-                            } catch (e: Exception) {
-                                Log.e("API_CALL", "Error al buscar producto: ", e)
-                                Toast.makeText(context, "Error de conexión", Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    }
+            LaunchedEffect(metodoSelecionado) {
+                if (metodoSelecionado != "Multiple") {
+                    yape = ""
+                    efectivo = ""
+                    ultimoCampoEditado = null
                 }
             }
-            val imageAnalyzer = remember {
-                ImageAnalysis.Builder()
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .build()
-                    .also { it.setAnalyzer(executor, barcodeAnalyzer) }
-            }
-
-            // --- 3. GESTIÓN DE PERMISOS ---
-            val cameraPermissionState = rememberPermissionState(android.Manifest.permission.CAMERA)
-
             MiTiendita360Theme {
-
-                Scaffold(
-                    modifier = Modifier.fillMaxSize(),
+                Scaffold(modifier = Modifier.fillMaxSize(),
                     topBar = {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -230,12 +244,12 @@ class SaleInsertActivity : ComponentActivity() {
                                 Spacer(modifier = Modifier.padding(5.dp))
                                 Column {
                                     Text(
-                                        "Registrar",
+                                        "Finalizar",
                                         color = Color.White,
                                         fontSize = 25.sp
                                     )
                                     Text(
-                                        "Nueva Venta",
+                                        "Venta",
                                         color = Color.White,
                                         fontSize = 25.sp
                                     )
@@ -245,440 +259,396 @@ class SaleInsertActivity : ComponentActivity() {
                     }
                 ) { innerPadding ->
                     Column (
-                        Modifier
+                        modifier = Modifier
+                            .padding(innerPadding)
                             .fillMaxSize()
-                            .background(color = Color.White)
-                            .padding(innerPadding),
-                    ) {
-                        Column(
-                            Modifier
-                                .clip(
-                                    shape = WideOvalBottomShape(
-                                        arcHeight = 200f, // Profundidad de la curva
-                                        horizontalControlOffset = 180f
-                                    )
-                                )
-                                .background(color = Fondo1)
-                        ) {
-                            Row (
-                                Modifier
-                                    .background(color = Fondo1)
-                                    .padding(horizontal = 25.dp)
-                                    .fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                            .background(Fondo1)
+                            .padding(20.dp)
+                    ){
+                        Text(text = "Cliente:",
+                            color = Color.White,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
 
-                            ){
-                                Text(
-                                    "Productos",
-                                    color = Color.White,
-                                    fontSize = 30.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Row (
-                                ){
-                                    Box(
-                                        modifier = Modifier
-                                            .size(50.dp)
-                                            .clip(shape = CircleShape)
-                                            .clickable {
-                                                if (cameraPermissionState.status.isGranted) {
-                                                    barcodeAnalyzer.startScanning() // Resetea el analizador
-                                                    showScanner = true // Muestra el diálogo
-                                                } else {
-                                                    cameraPermissionState.launchPermissionRequest()
-                                                }
-                                            }
-                                            .background(color = Color.White)
-                                            .padding(7.dp)
+                        Column (
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(GrisClaro)
+                        ){
+                            SearchableDropdown<Cliente>(
+                                options = clientesFiltrados,onValueChange = { clienteSeleccionado ->
+                                    selectedCliente = clienteSeleccionado
+                                    // Cuando seleccionas, el estado se actualiza a SOLO el DNI.
+                                    searchQuery = clienteSeleccionado.dni
+                                },
+                                optionToString = { cliente ->
+                                    // En la lista se muestra el nombre largo y DNI. Correcto.
+                                    "${cliente.nombre} ${cliente.apellidop} ${cliente.apellidom} DNI: ${cliente.dni}"
+                                },
+                                // El campo muestra el valor de 'searchQuery'. Correcto.
+                                searchQuery = searchQuery,
+                                onSearchQueryChange = { nuevaQuery ->
+                                    // Cuando escribes, actualizas 'searchQuery'. Correcto.
+                                    searchQuery = nuevaQuery
+                                    selectedCliente = null
+                                },
+                                placeholder = "Buscar cliente por DNI o nombre",
+                                color = GrisClaro,
+                                colorFlecha = Fondo1,
+                                colorTexto = GrisClaro2
+                            )
 
-                                    ){
-                                        Image(
-                                            painterResource(R.drawable.barcodescan),
-                                            contentDescription = "",
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.padding(5.dp))
-                                    Box(
-                                        contentAlignment = Alignment.Center,
-                                        modifier = Modifier
-                                            .size(50.dp)
-                                            .clip(shape = CircleShape)
-                                            .clickable {
-                                                val intent = Intent(
-                                                    context,
-                                                    SearchProductActivity::class.java
-                                                )
-                                                searchProductLauncher.launch(intent)
-                                            }
-                                            .background(color = Celeste)
-                                            .padding(5.dp)
-                                    ){
-                                        Image(
-                                            imageVector = (Icons.Default.Search),
-                                            contentDescription = "",
-                                            colorFilter = ColorFilter.tint(color = Color.White),
-                                            contentScale = ContentScale.Fit,
-                                            modifier = Modifier.size(40.dp)
-                                        )
-                                    }
-                                }
-                            }
-                            Spacer(modifier = Modifier.padding(10.dp))
-                            LazyColumn(
-                                verticalArrangement = Arrangement.spacedBy(15.dp),
-                                modifier = Modifier
-                                    .height(330.dp)
-                                    .padding(horizontal = 25.dp)
+                            HorizontalDivider(
+                                thickness = 1.dp,        // Grosor de la línea
+                                color = GrisClaro2,
+                                modifier = Modifier.padding(horizontal = 10.dp)        // Color de la línea, puedes usar el que prefieras
+                            )
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.Bottom
                             ) {
-                                // --- USA LA LISTA DINÁMICA ---
-                                items(
-                                    items = productosEnVenta,
-                                    key = { it.producto.id!! } // La clave sigue siendo el ID del producto
-                                ) { cartItem -> // La variable ahora es 'cartItem'
-                                    Row(
-                                        Modifier
-                                            .clip(shape = RoundedCornerShape(30.dp))
-                                            .fillMaxWidth()
-                                            .background(color = GrisClaro)
-                                            .padding(15.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        AsyncImage(
-                                            model = "${BuildConfig.API_BASE_URL}imagenes/${cartItem.producto.imagen}", // Usa cartItem
-                                            contentDescription = cartItem.producto.nombre,
-                                            modifier = Modifier
-                                                .size(75.dp)
-                                                .clip(RoundedCornerShape(12.dp)),
-                                            contentScale = ContentScale.Crop
-                                        )
-                                        Spacer(modifier = Modifier.padding(6.dp))
-                                        Column(Modifier.weight(1f)) {
-                                            Text(
-                                                cartItem.producto.nombre, // Usa cartItem
-                                                color = Color.White,
-                                                fontSize = 20.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                maxLines = 1
-                                            )
-                                            Text(
-                                                "S/ ${"%.2f".format(cartItem.producto.precioVenta)}", // Usa cartItem
-                                                color = VerdeLimon,
-                                                fontSize = 18.sp,
-                                            )
-
-                                            // <-- CAMBIO 5: El estado de la cantidad ahora vive fuera
-                                            val subtotal = cartItem.quantity * cartItem.producto.precioVenta
-
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                TextFielCantidad(
-                                                    quantity = cartItem.quantity, // Usa la cantidad del cartItem
-                                                    stockDisponible = cartItem.producto.stockActual,
-                                                    onQuantityChange = { newQuantity ->
-                                                        // Actualiza la cantidad directamente en el objeto de la lista
-                                                        val updatedList = productosEnVenta.map {
-                                                            if (it.producto.id == cartItem.producto.id) {
-                                                                it.copy(quantity = newQuantity)
-                                                            } else {
-                                                                it
-                                                            }
-                                                        }
-                                                        val filteredList = updatedList.filter { it.quantity > 0 }
-                                                        productosEnVenta.clear()
-                                                        productosEnVenta.addAll(filteredList)
+                                Column(
+                                    modifier = Modifier.weight(6f)
+                                ) {
+                                    TextFieldChevereBasico(
+                                        value = nuevoCliente,
+                                        onValueChange = {nuevoCliente = it},
+                                        placeholder = "Añadir nuevo Cliente",
+                                        imeAction = ImeAction.Next,
+                                        keyboarType = KeyboardType.Number,
+                                        enabled = true ,
+                                        color = GrisClaro,
+                                        colorTexto = GrisClaro2
+                                    )
+                                }
+                                Column(
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .height(50.dp)
+                                            .aspectRatio(1f)
+                                            .clip(shape = RoundedCornerShape(13.dp))
+                                            .clickable {
+                                                scope.launch {
+                                                    val dni = nuevoCliente
+                                                    // 1. Validar DNI
+                                                    if (dni.length != 8 || !dni.all { it.isDigit() }) {
+                                                        Toast.makeText(
+                                                            context,
+                                                            "Por favor, ingrese un DNI válido de 8 dígitos.",
+                                                            Toast.LENGTH_SHORT
+                                                        ).show()
+                                                        return@launch
                                                     }
-                                                )
-                                                Text(
-                                                    text = "S/ ${"%.2f".format(subtotal)}",
-                                                    color = Color.White,
-                                                    fontSize = 20.sp,
-                                                    fontWeight = FontWeight.Bold
-                                                )
-                                            }
-                                        }
+
+                                                    try {
+                                                        // --- 2. CREACIÓN DE RETROFIT "AL VUELO" PARA RENIEC ---
+                                                        val reniecApi: ReniecApiService =
+                                                            Retrofit.Builder()
+                                                                .baseUrl("https://api.decolecta.com/v1/reniec/dni/")
+                                                                .addConverterFactory(
+                                                                    GsonConverterFactory.create()
+                                                                )
+                                                                .build()
+                                                                .create(ReniecApiService::class.java)
+
+                                                        // 3. Consultar API de Reniec
+                                                        val reniecResponse =
+                                                            reniecApi.consultarDni(dni)
+
+                                                        // --- INICIO DE LA CORRECCIÓN ---
+                                                        if (reniecResponse.isSuccessful && reniecResponse.body() != null) {
+                                                            // --- FIN DE LA CORRECCIÓN ---
+                                                            val data = reniecResponse.body()!!
+                                                            val userId =
+                                                                FirebaseAuth.getInstance().currentUser?.uid
+
+                                                            if (userId == null) {
+                                                                Toast.makeText(
+                                                                    context,
+                                                                    "Error: Usuario no autenticado.",
+                                                                    Toast.LENGTH_SHORT
+                                                                ).show()
+                                                                return@launch
+                                                            }
+
+                                                            // 4. Preparar los datos para nuestro servidor
+                                                            val clienteRequest = ClienteRequest(
+                                                                dni = data.dni,
+                                                                nombre = data.nombres,
+                                                                apellidop = data.apellidoPaterno,
+                                                                apellidom = data.apellidoMaterno,
+                                                                idUsuario = userId
+                                                            )
+
+                                                            // 5. Llamar a nuestro script PHP para registrar
+                                                            val registroResponse =
+                                                                RetrofitClient.clienteService.registrarCliente(
+                                                                    clienteRequest
+                                                                )
+                                                            if (registroResponse.isSuccessful) {
+                                                                Toast.makeText(
+                                                                    context,
+                                                                    "Cliente '${data.nombres}' registrado.",
+                                                                    Toast.LENGTH_LONG
+                                                                ).show()
+                                                                nuevoCliente = ""
+                                                                clienteViewModel.getClientes()
+                                                            } else {
+                                                                val errorMsg =
+                                                                    registroResponse.errorBody()
+                                                                        ?.string()
+                                                                        ?: "Error al registrar."
+                                                                Toast.makeText(
+                                                                    context,
+                                                                    "Error: $errorMsg",
+                                                                    Toast.LENGTH_LONG
+                                                                ).show()
+                                                            }
+
+                                                        } else {
+                                                            // --- CORRECCIÓN DEL MENSAJE DE ERROR ---
+                                                            // Si la llamada no fue exitosa, el error está en errorBody()
+                                                            val errorMsg =
+                                                                reniecResponse.errorBody()?.string()
+                                                                    ?: "DNI no encontrado."
+                                                            Toast.makeText(
+                                                                context,
+                                                                "Error API Reniec: $errorMsg",
+                                                                Toast.LENGTH_LONG
+                                                            ).show()
+                                                        }
+
+                                                    } catch (e: Exception) {
+                                                        Toast.makeText(
+                                                            context,
+                                                            "Error de red: ${e.message}",
+                                                            Toast.LENGTH_LONG
+                                                        ).show()
+                                                    }
+                                                }
+                                            },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        // Si no hay imagen seleccionada, muestra el ícono
+                                        Icon(
+                                            imageVector = Icons.Default.Add,
+                                            contentDescription = "Subir Imagen",
+                                            tint = Fondo1,
+                                            modifier = Modifier
+                                                .size(30.dp)
+                                                .clip(shape = CircleShape)
+                                                .background(color = VerdeLimon)
+                                                .padding(5.dp)
+                                        )
                                     }
                                 }
                             }
-                            Spacer(modifier = Modifier.padding(10.dp))
-                            Box(modifier = Modifier.padding(horizontal = 25.dp)) {
-                                HorizontalDivider(
-                                    thickness = 1.dp,        // Grosor de la línea
-                                    color = GrisClaro        // Color de la línea, puedes usar el que prefieras
+                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+
+
+                        Text(text = "Metodo:",
+                            color = Color.White,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        Row (
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(5.dp)
+                        ){
+                            Column (Modifier.weight(1f)){
+                                DropdownChevereBasico(
+                                    options = ListaMetodos,
+                                    selectedValue = metodoSelecionado,
+                                    onValueChange = { nuevoMetodo ->
+                                        metodoSelecionado = nuevoMetodo
+                                    },
+                                    optionToString = { it },
+                                    color = GrisClaro,
+                                    colorFlecha = Fondo1,
+                                    colorTexto = GrisClaro2
                                 )
                             }
-                            Spacer(modifier = Modifier.padding(10.dp))
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 25.dp),
-                                horizontalAlignment = Alignment.End // Alinea los textos a la derecha
-                            ) {
-                                val totalVenta = productosEnVenta.sumOf { it.producto.precioVenta * it.quantity }
-                                Row (
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    modifier = Modifier.fillMaxWidth()
-                                ){
-                                    Text(
-                                        "Subtotal:",
-                                        color = Color.White,
-                                        fontSize = 18.sp)
-                                    Text(
-                                        "S/ ${"%.2f".format(totalVenta)}", // Usa la misma variable
-                                        color = Color.White,
-                                        fontSize = 18.sp
+                            if (metodoSelecionado == "Multiple"){
+                                Row(
+                                    Modifier.weight(1f),
+                                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                ) {
+                                    // --- CAMPO DE YAPE CORREGIDO ---
+                                    Column (Modifier.weight(1f)){
+                                        TextFieldChevereBasico(
+                                            value = yape, // <-- CORRECCIÓN 1: Usa 'yape' directamente
+                                            onValueChange = {
+                                                yape = it
+                                                ultimoCampoEditado = "yape"
+                                            },
+                                            placeholder = "Y",
+                                            imeAction = ImeAction.Done,
+                                            keyboarType = KeyboardType.Decimal,
+                                            enabled = true ,
+                                            color = GrisClaro,
+                                            colorTexto = GrisClaro2
+                                        )
+                                    }
+                                    // --- CAMPO DE EFECTIVO CORREGIDO ---
+                                    Column (Modifier.weight(1f)){
+                                        TextFieldChevereBasico(
+                                            value = efectivo, // <-- CORRECCIÓN 2: Usa 'efectivo' directamente
+                                            onValueChange = {
+                                                efectivo = it
+                                                ultimoCampoEditado = "efectivo"
+                                            },
+                                            placeholder = "E",
+                                            imeAction = ImeAction.Done,
+                                            keyboarType = KeyboardType.Decimal,
+                                            enabled = true ,
+                                            color = GrisClaro,
+                                            colorTexto = GrisClaro2
+                                        )
+                                    }
+                                }
+                            } else {
+                                // --- CAMPO DE MONTO ÚNICO CORREGIDO ---
+                                Column (Modifier.weight(1f)){
+                                    TextFieldChevereBasico(
+                                        value = "S/ ${"%.2f".format(totalVenta)}",
+                                        onValueChange = { /* NO HACER NADA */ }, // <-- CORRECCIÓN 3
+                                        placeholder = "S/0.00",
+                                        imeAction = ImeAction.Done,
+                                        keyboarType = KeyboardType.Decimal,
+                                        enabled = false ,
+                                        color = GrisClaro,
+                                        colorTexto = GrisClaro2
                                     )
                                 }
-                                Row (
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    modifier = Modifier.fillMaxWidth()
-                                ){
-                                    Text(
-                                        "Descuento:",
-                                        color = Color.White,
-                                        fontSize = 18.sp
-                                    )
-                                    Text(
-                                        "S/ 0.00",
-                                        color = Color.White,
-                                        fontSize = 18.sp
-                                    )
-                                }
-                                Row (
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    modifier = Modifier.fillMaxWidth()
-                                ){
-                                    Text(
-                                        "TOTAL:",
-                                        color = VerdeLimon,
-                                        fontSize = 24.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(
-                                        "S/ ${"%.2f".format(totalVenta)}",
-                                        color = VerdeLimon,
-                                        fontSize = 24.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                                Spacer(modifier = Modifier.padding(40.dp))
                             }
                         }
 
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        HorizontalDivider(
+                            thickness = 1.dp,        // Grosor de la línea
+                            color = Color.White        // Color de la línea, puedes usar el que prefieras
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ){
+                            Text(
+                                text = "Subtotal",
+                                color = Color.White,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = "S/ ${"%.2f".format(totalVenta)}",
+                                color = Color.White,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ){
+                            Text(
+                                text = "Descuentos",
+                                color = Color.White,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = "S/ 0.00",
+                                color = Color.White,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(5.dp))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Verdecito.copy(alpha = 0.2f))
+                                .padding(8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ){
+                            Text(
+                                text = "Total",
+                                color = Verdecito,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = "S/ ${"%.2f".format(totalVenta)}",
+                                color = Verdecito,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        Spacer(modifier = Modifier.weight(1f))
                         Column (
-                            modifier = Modifier.padding(horizontal = 25.dp)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .align(Alignment.End)
                         ){
                             BotonChevere(
                                 texto = "Cancelar",
                                 colorFondo = Rojito,
-                                colorTexto = Color.White
-                            ) {
-                                finish()
-                            }
-                            Spacer(modifier = Modifier.padding(5.dp))
+                                colorTexto = Color.White,
+                                onClick = {
+                                    finish()
+                                }
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
                             BotonChevere(
-                                texto = "Guardar Venta",
+                                texto = "Registrar Venta",
                                 colorFondo = VerdeLimon,
-                                colorTexto = GrisClaro
-                            ) {
-                                // --- INICIO DE LA LÓGICA DE GUARDADO ---
-                                scope.launch {
-
-                                    // Validar que el carrito no esté vacío
-                                    if (productosEnVenta.isEmpty()) {
-                                        Toast.makeText(context, "El carrito está vacío", Toast.LENGTH_SHORT).show()
-                                        return@launch
-                                    }
-
+                                colorTexto = Fondo1,
+                                onClick = {
                                     val userId = FirebaseAuth.getInstance().currentUser?.uid
                                     if (userId == null) {
-                                        Toast.makeText(context, "Error: Usuario no autenticado", Toast.LENGTH_SHORT).show()
-                                        return@launch
+                                        Toast.makeText(context, "Error de usuario. Vuelva a iniciar sesión.", Toast.LENGTH_SHORT).show()
+                                        return@BotonChevere
                                     }
 
-                                    // 1. Construir la lista de detalles
-                                    val detalles = productosEnVenta.map { cartItem ->
-                                        DetalleVentaRequest(
-                                            idProducto = cartItem.producto.id!!,
-                                            precioVenta = cartItem.producto.precioVenta,
-                                            cantidad = cartItem.quantity,
-                                            subtotal = cartItem.quantity * cartItem.producto.precioVenta
-                                        )
+                                    // --- INICIO DE LA CORRECCIÓN ---
+                                    // Ahora permitimos que el cliente sea nulo
+                                    val clienteDni = selectedCliente?.dni
+
+                                    // Si el campo de búsqueda tiene texto pero no hay cliente seleccionado,
+                                    // podría significar que el usuario no completó la selección.
+                                    if (searchQuery.isNotEmpty() && clienteDni == null) {
+                                        Toast.makeText(context, "Cliente no seleccionado. Para continuar sin cliente, vacíe el campo de búsqueda.", Toast.LENGTH_LONG).show()
+                                        return@BotonChevere
                                     }
-                                    val totalVenta = detalles.sumOf { it.subtotal }
-                                    val dbFormatter = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()) // <-- FORMATO DE FECHA
-                                    val fechaHoraParaEnviar: String = dbFormatter.format(java.util.Date()) // <-- VARIABLE CON FECHA Y HORA
+                                    // --- FIN DE LA CORRECCIÓN ---
 
-                                    val pagos = listOf(
-                                        PagoRequest(metodoPago = "Efectivo", monto = totalVenta)
-                                    )
-
-
-                                    val ventaRequest = VentaRequest(
-                                        montoTotal = totalVenta,
+                                    // Llamar al ViewModel con los datos necesarios
+                                    saleViewModel.registrarVentaConPagos(
+                                        totalVenta = totalVenta,
                                         idUsuario = userId,
-                                        idCliente = null,
-                                        detalles = detalles,
-                                        pagos = pagos,
-                                        fechaHora = fechaHoraParaEnviar // <-- ENVÍA LA FECHA Y HORA
+                                        idCliente = clienteDni, // <-- Pasamos el DNI o null
+                                        cartItems = cartItems,
+                                        metodoPago = metodoSelecionado,
+                                        montoYape = yape.toDoubleOrNull(),
+                                        montoEfectivo = efectivo.toDoubleOrNull()
                                     )
-
-                                    try {
-                                        val response = RetrofitClient.productoService.registrarVenta(ventaRequest)
-                                        if (response.success) {
-                                            Toast.makeText(context, response.message, Toast.LENGTH_LONG).show()
-                                            finish()
-                                        } else {
-                                            Toast.makeText(context, "Error: ${response.message}", Toast.LENGTH_LONG).show()
-                                        }
-                                    } catch (e: Exception) {
-                                        var errorMessage = "Error desconocido."
-                                        if (e is HttpException) {
-                                            try {
-                                                // INTENTAMOS LEER EL CUERPO DEL ERROR, AQUÍ ESTÁ LA CLAVE
-                                                val errorBody = e.response()?.errorBody()?.string()
-
-                                                if (!errorBody.isNullOrEmpty()) {
-                                                    // Si el cuerpo del error no está vacío, ese es nuestro mensaje
-                                                    errorMessage = errorBody
-                                                } else {
-                                                    // Si el cuerpo del error está vacío, mostramos el código y mensaje HTTP
-                                                    errorMessage = "Error HTTP ${e.code()}: ${e.message()}"
-                                                }
-                                            } catch (jsonError: Exception) {
-                                                // Si hay un error al leer el cuerpo del error
-                                                errorMessage = "Error al leer la respuesta del servidor."
-                                            }
-                                        } else {
-                                            // Para otros tipos de errores (ej. sin conexión a internet)
-                                            errorMessage = e.message ?: "No se pudo conectar al servidor."
-                                        }
-
-                                        // Mostramos el mensaje de error DETALLADO en el Log y en un Toast largo
-                                        Log.e("REGISTRAR_VENTA", "FALLO CRÍTICO EN LA API: $errorMessage")
-                                        // Usamos un AlertDialog para asegurarnos de que el mensaje se pueda leer completo
-                                        AlertDialog.Builder(context)
-                                            .setTitle("Error Crítico de la API")
-                                            .setMessage(errorMessage)
-                                            .setPositiveButton("Entendido") { dialog, _ -> dialog.dismiss() }
-                                            .show()
-                                    }
                                 }
-                            }
-                        }
-
-                    }
-                    if (showScanner) {
-                        Dialog(
-                            onDismissRequest = { showScanner = false },
-                            // --- AÑADE ESTAS PROPIEDADES ---
-                            properties = DialogProperties(
-                                usePlatformDefaultWidth = false, // Desactiva el ancho por defecto de la plataforma
-                                decorFitsSystemWindows = false // Permite que el diálogo se dibuje sobre las barras del sistema
                             )
-                        ) {
-                            // Envolvemos el ScannerView en un Box para que ocupe toda la superficie
-                            Box(modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color.Black) // Fondo negro para evitar transparencias
-                            ) {
-                                // Usamos el ScannerView que ya creaste
-                                ScannerView(
-                                    onBarcodeScanned = { barcode ->
-                                        // La lógica ya se maneja en la inicialización del BarcodeAnalyzer
-                                    },
-                                    cameraProvider = cameraProvider,
-                                    previewView = previewView,
-                                    imageAnalyzer = imageAnalyzer
-                                )
-                            }
                         }
                     }
                 }
             }
         }
-    }
-}
-@Composable
-fun TextFielCantidad(
-    quantity: Int,
-    stockDisponible: Int,
-    onQuantityChange: (Int) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(5.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // --- BOTÓN DE DECREMENTAR ---
-        ActionButton(
-            icon = Icons.Default.Remove,
-            iconColor = Color.White,
-            backgroundColor = Color.Red,
-            buttonSize = 20.dp,
-            onClick = {
-                // Decrementa solo si es mayor que 1
-                if (quantity > 1) {
-                    onQuantityChange(quantity - 1)
-                }
-            },
-        )
-
-        // --- CAMPO DE TEXTO NUMÉRICO ---
-        BasicTextField(
-            // El 'value' ahora debe manejar el caso de que la cantidad sea 0
-            value = if (quantity == 0) "" else quantity.toString(),
-            onValueChange = { newValue ->
-                // --- LÓGICA CORREGIDA ---
-                if (newValue.isEmpty()) {
-                    // Si el usuario borra todo, actualizamos el estado a 0
-                    onQuantityChange(0)
-                } else {
-                    // Si no está vacío, intentamos convertirlo a número
-                    val newQuantity = newValue.toIntOrNull()
-                    if (newQuantity != null && newQuantity <= stockDisponible) {
-                        // Solo actualizamos si es un número válido y menor o igual a 100
-                        onQuantityChange(newQuantity)
-                    }
-                    // Si no es un número válido (ej: "abc") o es mayor a 100, no hacemos nada.
-                }
-            },
-            // Estilos y configuración
-            modifier = Modifier
-                .width(50.dp) // Ancho justo para hasta 3 dígitos
-                .background(
-                    color = Fondo1, // Un fondo que se integre
-                    shape = RoundedCornerShape(8.dp)
-                ),
-            textStyle = TextStyle(
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
-            ),
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Done
-            ),
-            maxLines = 1
-        )
-
-        // --- BOTÓN DE INCREMENTAR ---
-        ActionButton(
-            icon = Icons.Default.Add,
-            iconColor = Color.White,
-            backgroundColor = Color.Green,
-            buttonSize = 20.dp,
-            onClick = {
-                // Incrementa solo si es menor que 100
-                if (quantity < stockDisponible) {
-                    onQuantityChange(quantity + 1)
-                }
-            }
-        )
     }
 }

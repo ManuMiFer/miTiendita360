@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.miranda.mitiendita360.ui.theme.Fondo1
 import com.miranda.mitiendita360.ui.theme.VerdeLimon
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -215,6 +216,99 @@ fun <T> DropdownChevere2(
                         text = { Text(
                             text = optionToString(option),
                             color = Color.Black)
+                        },
+                        onClick = {
+                            onValueChange(option) // Actualiza el valor seleccionado
+                            expanded = false      // Cierra el menú
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun <T> DropdownChevereBasico(
+    options: List<T>,
+    selectedValue: String,
+    onValueChange: (T) -> Unit,
+    optionToString: (T) -> String,
+    color: Color,
+    colorFlecha: Color,
+    colorTexto: Color
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val rotationState by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        label = "Dropdown Arrow Rotation" // Etiqueta para herramientas de depuración
+    )
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+    ) {
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded },
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            BasicTextField(
+                value = selectedValue,
+                onValueChange = {},
+                readOnly = true,
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+                    .height(50.dp),
+                textStyle = LocalTextStyle.current.copy(
+                    textAlign = TextAlign.Start,
+                    color = colorTexto
+                )
+            ) { innerTextField ->
+                OutlinedTextFieldDefaults.DecorationBox(
+                    value = selectedValue,
+                    innerTextField = innerTextField,
+                    enabled = true,
+                    singleLine = true,
+                    visualTransformation = VisualTransformation.None,
+                    interactionSource = remember { MutableInteractionSource() },
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    trailingIcon = { Icon(
+                        imageVector = Icons.Default.ArrowDropDown ,
+                        contentDescription = "Desplegar menú",
+                        tint = colorFlecha,
+                        modifier = Modifier.rotate(rotationState)
+                    ) },
+                    container = {
+                        OutlinedTextFieldDefaults.ContainerBox(
+                            enabled = true,
+                            isError = false,
+                            interactionSource = remember { MutableInteractionSource() },
+                            colors = OutlinedTextFieldDefaults.colors(
+                                unfocusedContainerColor = color,
+                                focusedContainerColor = color,
+                                unfocusedBorderColor = Color.Transparent,
+                                focusedBorderColor = Color.Transparent
+                            ),
+                            shape = RoundedCornerShape(13.dp),
+                        )
+                    }
+                )
+            }
+            // Este es el menú desplegable que aparece
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier.background(Color.White)
+            ) {
+                options.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(
+                            text = optionToString(option),
+                            color = Fondo1
+                        )
                         },
                         onClick = {
                             onValueChange(option) // Actualiza el valor seleccionado

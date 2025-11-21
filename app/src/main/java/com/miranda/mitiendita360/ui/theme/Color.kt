@@ -22,3 +22,7 @@ val Rojito = Color(0xFFed4932)
 val Rojo = Color(0xFFaf493b)
 val Verde = Color(0xFF7fab4d)
 val Amarillo = Color(0xFFbbb456)
+
+val Naranjita = Color(0xFFCB865C)
+val Verdecito = Color(0xFF83C47D)
+val Celestito = Color(0xFF8ACEFF)

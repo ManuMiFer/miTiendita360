@@ -43,3 +43,4 @@ data class Purchase(
     val totalAmount: Double,
     val products: List<ProductDetail>
 )
+
